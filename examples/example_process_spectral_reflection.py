@@ -33,6 +33,7 @@ plt.plot(wavelength, reflection,
 x, ret = fit_arc_reflection_spectrum(wavelength,
                                      reflection / 1e2,
                                      model='a',
+                                     aoi=8,
                                      wavelength_min=450,
                                      wavelength_max=1000)
 wavelength_extend = np.linspace(300, 1250, 1000)
