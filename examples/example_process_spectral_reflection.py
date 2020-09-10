@@ -16,12 +16,11 @@ from pvarc import index_BK7, thick_slab_reflection, \
     arc_reflection_model
 from pvarc.oceaninsight import read_oceanview_file
 
-# Import data
+# Read data file
 data = read_oceanview_file('example_panasonic-n330_reflection.txt')
 crop = np.logical_and(data['wavelength'] > 300, data['wavelength'] < 1100)
 wavelength = data['wavelength'][crop]
 reflection = data['value'][crop]
-
 
 # Plot data
 plt.figure(0)
@@ -31,7 +30,11 @@ plt.plot(wavelength, reflection,
          color=[0, 0, 0.8])
 
 # Fit model
-x, ret = fit_arc_reflection_spectrum(wavelength, reflection / 1e2, model='a')
+x, ret = fit_arc_reflection_spectrum(wavelength,
+                                     reflection / 1e2,
+                                     model='a',
+                                     wavelength_min=450,
+                                     wavelength_max=1000)
 wavelength_extend = np.linspace(300, 1250, 1000)
 reflection_fit = arc_reflection_model(wavelength_extend,**x)
 
@@ -54,7 +57,6 @@ plt.plot(wavelength_extend,
          label='Fit',
          linewidth=3,
          color=[1, 0.5, 0, 0.5], )
-
 plt.text(450, 3, '*Best fit parameters*\n' + \
          'Thickness: {:.0f} nm\n'.format(x['thickness']) + \
          'Porosity: {:.0%}\n'.format(x['porosity']) + \
@@ -64,14 +66,10 @@ plt.text(450, 3, '*Best fit parameters*\n' + \
          ,
          fontsize=8,
          )
-plt.show()
 plt.xlabel('Wavelength (nm)')
 plt.ylabel('Reflection (%)')
 plt.ylim([0, 8])
 plt.xlim([300, 1250])
-#
-
 plt.legend()
 plt.show()
-
 plt.savefig('example_out.png',dpi=200)
