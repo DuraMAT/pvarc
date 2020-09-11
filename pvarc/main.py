@@ -5,11 +5,13 @@ from time import time
 from numpy import pi, inf
 
 import os
-from scipy.interpolate import interp2d, interp1d, RegularGridInterpolator
+from scipy.interpolate import interp1d, RegularGridInterpolator
 from scipy.optimize import minimize, basinhopping
 
-start_time = time()
-# Inport the calculated thin film reflection data.
+# start_time = time()
+
+# Inport the calculated thin film reflection data. This interpolator is used for
+# the fast calculations.
 cd = os.path.dirname(os.path.abspath(__file__))
 thin_film_reflection_data = np.load(
     os.path.join(cd, 'thin_film_reflectance_calculated_values.npz'))
@@ -22,7 +24,7 @@ thin_film_interpolator = RegularGridInterpolator(
     thin_film_reflection_data['thin_film_reflectance'],
     bounds_error=False,
     fill_value=0)
-print('Time to import interpolator: {}'.format(time() - start_time))
+# print('Time to import interpolator: {}'.format(time() - start_time))
 
 
 def index_BK7(wavelength):
@@ -45,22 +47,6 @@ def index_BK7(wavelength):
                 )
     return n
 
-
-#
-# def index_porous_Si02(wavelength, average_index=1.23):
-#     wavelength = wavelength / 1000
-#     n = np.sqrt(1 + \
-#                 (0.6961663 * wavelength ** 2) / (
-#                         wavelength ** 2 - 0.06840432 ** 2) + \
-#                 (0.4079426 * wavelength ** 2) / (
-#                         wavelength ** 2 - 0.11624142 ** 2) + \
-#                 (0.8974794 * wavelength ** 2) / (
-#                         wavelength ** 2 - 9.8961612 ** 2)
-#                 )
-#
-#     # Reduce n to account for porosity, roughly.
-#     n = n / n.mean() * average_index
-#     return n
 
 
 def index_porous_silica(wavelength, porosity=0.5):
@@ -116,17 +102,24 @@ def thin_film_reflection(polarization, index_film, index_substrate,
                          film_thickness, aoi,
                          wavelength,
                          vectorize=False):
+
     """
     Calculate reflection from a thin film on a substrate. dimensions in nm.
 
 
-    :param polarization:
-    :param index_film:
-    :param index_substrate:
-    :param d_list:
-    :param aoi:
-    :param wavelength:
-    :return:
+    Parameters
+    ----------
+    polarization
+    index_film
+    index_substrate
+    film_thickness
+    aoi
+    wavelength
+    vectorize
+
+    Returns
+    -------
+
     """
     degree = pi / 180
     wavelength = wavelength.astype('float')
@@ -458,6 +451,14 @@ def fit_arc_reflection_spectrum(wavelength,
     Returns
     -------
 
+    result : dict
+
+        Dictionary of best fit values.
+
+    ret
+
+        Output of optimizer.
+
     """
 
     if np.mean(reflectance) > 1:
@@ -675,7 +676,6 @@ def fit_arc_reflection_spectrum(wavelength,
                   'fraction_dust': res['x'][2] / scale['fraction_dust'],
                   'porosity': res['x'][3] / scale['porosity'],
                   }
-
     elif model == 'TP':
         result = {'thickness': res['x'][0] / scale['thickness'],
                   'fraction_abraded': fixed['fraction_abraded'] / scale['fraction_abraded'],
