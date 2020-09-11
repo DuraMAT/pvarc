@@ -273,9 +273,12 @@ def get_eqe(wavelength,
     return eqe
 
 
-def arc_reflection_model(wavelength, thickness, fraction_abraded,
-                         porosity,
-                         fraction_dust=0, aoi=8):
+def arc_reflection_model(wavelength,
+                         thickness=125,
+                         fraction_abraded=0,
+                         porosity=0.3,
+                         fraction_dust=0,
+                         aoi=8):
     """
     Return the reflection values for a model of an aged ARC. The reflection
     is a linear combination of reflection from a thin film of a variable
@@ -283,7 +286,8 @@ def arc_reflection_model(wavelength, thickness, fraction_abraded,
 
     Parameters
     ----------
-    wavelength : numeric
+    wavelength : ndarray
+
         wavelength in nm
 
     thickness
@@ -294,22 +298,24 @@ def arc_reflection_model(wavelength, thickness, fraction_abraded,
 
         fraction of coating loss. 1 corresponds to 100% of the coating area
         removed and only underlying glass is present, 0 corresponds to the
-        coating covers the entire sample.
+        coating covering the entire sample.
 
     fraction_dust
 
-        fraction of module area covered by dust with reflectivity of 1. Only
-        used for model type 'b'.
+        fraction of module area covered by dust with reflectivity of 1. A
+        value of 0 corresponds to no dust (clean sample), 1 to full dust
+        coverage (reflectivity of 1).
 
     aoi
 
         angle of incidence in degrees.
 
-    model
-        string denoting model type. Currently only type 'a' is allowed.
-
     Returns
     -------
+
+    reflectance : ndarray
+
+        Reflectance of sample at the values of wavelength specified.
 
     """
 
@@ -388,7 +394,8 @@ def fit_arc_reflection_spectrum(wavelength,
                                 wavelength_min=450,
                                 wavelength_max=1000):
     """
-    This function fits an ARC model to the reflection spectrum.
+    This function fits an ARC model to the reflection spectrum. The ARC model
+    is described in the function arc_reflection_model.
 
     Parameters
     ----------
