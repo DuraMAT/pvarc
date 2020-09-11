@@ -8,7 +8,7 @@ from scipy.interpolate import interp1d, RegularGridInterpolator
 from scipy.optimize import minimize, basinhopping
 from tqdm import tqdm
 
-start_time = time()
+# start_time = time()
 
 # Inport the calculated thin film reflection data. This interpolator is used for
 # the fast calculations.
@@ -27,7 +27,7 @@ thin_film_interpolator = RegularGridInterpolator(
     fill_value=0)
 
 
-print('Time to import interpolator: {}'.format(time() - start_time))
+# print('Time to import interpolator: {}'.format(time() - start_time))
 
 
 def index_BK7(wavelength):
@@ -388,7 +388,7 @@ def build_arc_reflection_model_interpolator_data():
              reflectance_scale_factor=reflectance_scale_factor,
              reflectance_uint16=reflectance_uint16
              )
-    print('File saved as {}: '.format(filename))
+    print('File saved as: {}'.format(filename))
 
     return thickness, wavelength, aoi, porosity, thin_film_reflectance
 
