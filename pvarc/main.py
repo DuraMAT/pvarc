@@ -196,6 +196,7 @@ def thin_film_reflection_fast(wavelength, thickness=120, aoi=8, porosity=0.1):
 
     """
 
+    # TODO: Reduce the size of the calculated fast data values.
     coords = np.array([thickness * np.ones_like(wavelength),
                        wavelength,
                        aoi * np.ones_like(wavelength),
@@ -381,19 +382,71 @@ def fit_arc_reflection_spectrum(wavelength,
                                 x0=None,
                                 aoi=8,
                                 model='d',
+                                fixed=None,
                                 verbose=False,
                                 method='minimize',
                                 wavelength_min=450,
                                 wavelength_max=1000):
     """
-    Fit PVARC model
+    This function fits an ARC model to the reflection spectrum.
 
     Parameters
     ----------
-    wavelength
+    wavelength : ndarray
+
         Wavelength in nm
-    reflectance
+
+    reflectance : ndarray
+
         Fractional reflection between 0 and 1, unitless.
+
+    x0 : dict
+
+        Startpoint for fitting algorithm.
+
+    aoi : float
+
+        Angle of incidence of light
+
+    model : str
+
+        Different variation of the same model are available. The model is
+        described under the function `arc_reflection_model`. The fixed values
+        are specified in the input 'fixed'.
+
+        'TP' - thickness and poristy are fit, fraction_abraded and fraction_dust
+        set to fixed values.
+
+        'TPA' - thickness, porosity and fraction_abraded are fit,
+        fraction_dust is fixed.
+
+        'TPAD' - thickness, porosity, fraction_abraded and fraction_dust are
+        fit.
+
+        'TAD' - thickness, fraction_abraded, fraction_dust are fit, porosity
+        is a fixed value.
+
+    fixed : dict
+
+        Dictionary of parameters to be fixed. Default is:
+           fixed = {'thickness': 125, 'fraction_abraded': 0, 'fraction_dust': 0,
+             'porosity': 0.3}
+
+     verbose : bool
+
+        Whether to print output at each iteration.
+
+    method : str
+
+        Optimization method, can be 'minimize' or 'basinhopping'
+
+    wavelength_min : float
+
+        Lower bound for wavelength values used in fit.
+
+    wavelength_max : float
+
+        Upper bound for wavelength values used in fit.
 
     Returns
     -------
@@ -407,6 +460,12 @@ def fit_arc_reflection_spectrum(wavelength,
     if x0 == None:
         x0 = estimate_arc_reflection_model_params(wavelength, reflectance)
 
+    if fixed==None:
+        fixed = {'thickness': 125,
+             'fraction_abraded': 0,
+             'fraction_dust': 0,
+             'porosity': 0.3}
+
     # print('x0: ', x0)
 
     scale = {'thickness': 0.01,
@@ -414,23 +473,23 @@ def fit_arc_reflection_spectrum(wavelength,
              'fraction_dust': 1000,
              'porosity': 1}
 
-    if model == 'a':
+    if model == 'TPA':
         x0_list = [x0['thickness'] * scale['thickness'],
                    x0['fraction_abraded'] * scale['fraction_abraded'],
                    x0['porosity'] * scale['porosity']
                    ]
-    elif model == 'b':
+    elif model == 'TAD':
         x0_list = [x0['thickness'] * scale['thickness'],
                    x0['fraction_abraded'] * scale['fraction_abraded'],
                    x0['fraction_dust'] * scale['fraction_dust']
                    ]
-    elif model == 'c':
+    elif model == 'TPAD':
         x0_list = [x0['thickness'] * scale['thickness'],
                    x0['fraction_abraded'] * scale['fraction_abraded'],
                    x0['fraction_dust'] * scale['fraction_dust'],
                    x0['porosity'] * scale['porosity'],
                    ]
-    elif model == 'd':
+    elif model == 'TP':
         x0_list = [x0['thickness'] * scale['thickness'],
                    x0['porosity'] * scale['porosity'],
                    ]
@@ -458,44 +517,30 @@ def fit_arc_reflection_spectrum(wavelength,
     # if not aoi == 8:
     #     raise Exception('aoi must be 8 degrees.')
 
-    if model == 'a':
-        bounds = [(100 * scale['thickness'], 200 * scale['thickness']),
+    thickness_min = 50
+    thickness_max = 250
+    porosity_max = 0.5
+
+    if model == 'TPA':
+        bounds = [(thickness_min * scale['thickness'], thickness_max * scale['thickness']),
                   (0, 1 * scale['fraction_abraded']),
-                  (0, 0.5 * scale['porosity']),
+                  (0, porosity_max * scale['porosity']),
                   ]
-    elif model == 'b':
-        bounds = [(100 * scale['thickness'], 200 * scale['thickness']),
+    elif model == 'TAD':
+        bounds = [(thickness_min * scale['thickness'], thickness_max * scale['thickness']),
                   (0, 1 * scale['fraction_abraded']),
                   (0, 1 * scale['fraction_dust']),
                   ]
-    elif model == 'c':
-        bounds = [(100 * scale['thickness'], 200 * scale['thickness']),
+    elif model == 'TPAD':
+        bounds = [(thickness_min * scale['thickness'], thickness_max * scale['thickness']),
                   (0, 1 * scale['fraction_abraded']),
                   (0, 1 * scale['fraction_dust']),
-                  (0, 1 * scale['porosity']),
+                  (0, porosity_max * scale['porosity']),
                   ]
-    elif model == 'd':
-        bounds = [(100 * scale['thickness'], 200 * scale['thickness']),
-                  (0, 0.5 * scale['porosity']),
+    elif model == 'TP':
+        bounds = [(thickness_min * scale['thickness'], thickness_max * scale['thickness']),
+                  (0, porosity_max * scale['porosity']),
                   ]
-
-
-    def arc_model_b(wavelength, thickness, fraction_abraded, fraction_dust):
-
-        thin_film_reflectance = thin_film_reflectance = thin_film_reflection_fast(
-            wavelength,
-            thickness=thickness,
-            aoi=aoi,
-            porosity=0.1)
-
-        glass_reflectance = np.interp(wavelength, wavelength_calc,
-                                      glass_reflectance_calc)
-
-        reflectance = (1 - fraction_dust) * (
-                fraction_abraded * glass_reflectance + (
-                1 - fraction_abraded) * thin_film_reflectance) + fraction_dust
-
-        return 100 * reflectance
 
     def arc_model_c(wavelength, thickness, fraction_abraded, fraction_dust,
                     porosity):
@@ -530,27 +575,28 @@ def fit_arc_reflection_spectrum(wavelength,
 
         # print('x: ',x)
 
-        if model == 'a':
+        if model == 'TPA':
             thickness = x[0] / scale['thickness']
             fraction_abraded = x[1] / scale['fraction_abraded']
             porosity = x[2] / scale['porosity']
             reflectance_model = arc_model_c(wavelength, thickness,
                                             fraction_abraded=fraction_abraded,
-                                            fraction_dust=0,
+                                            fraction_dust=fixed['fraction_dust'],
                                             porosity=porosity)
-        elif model == 'b':
+        elif model == 'TAD':
             thickness = x[0] / scale['thickness']
             fraction_abraded = x[1] / scale['fraction_abraded']
             fraction_dust = x[2] / scale['fraction_dust']
-            reflectance_model = arc_model_b(wavelength, thickness,
-                                            fraction_abraded, fraction_dust)
+            reflectance_model = arc_model_c(wavelength, thickness,
+                                            fraction_abraded, fraction_dust,
+                                            porosity=fixed['porosity'])
             # if verbose:
             #     print(
             #         'Thickness: {:03.2f}, Fraction Abraded: {:.1%}, Fraction dust: {:.1%}'.format(
             #             thickness,
             #             fraction_abraded,
             #             fraction_dust))
-        elif model == 'c':
+        elif model == 'TPAD':
 
             thickness = x[0] / scale['thickness']
             fraction_abraded = x[1] / scale['fraction_abraded']
@@ -559,12 +605,13 @@ def fit_arc_reflection_spectrum(wavelength,
             reflectance_model = arc_model_c(wavelength, thickness,
                                             fraction_abraded, fraction_dust,
                                             porosity)
-        elif model == 'd':
+        elif model == 'TP':
 
             thickness = x[0] / scale['thickness']
             porosity = x[1] / scale['porosity']
             reflectance_model = arc_model_c(wavelength, thickness,
-                                            fraction_abraded=0, fraction_dust=0,
+                                            fraction_abraded=fixed['fraction_abraded'],
+                                            fraction_dust=fixed['fraction_dust'],
                                             porosity=porosity)
 
         else:
@@ -605,26 +652,27 @@ def fit_arc_reflection_spectrum(wavelength,
                            callback=basinhopping_callback
                            )
 
-    if model == 'a':
+    if model == 'TPA':
         result = {'thickness': res['x'][0] / scale['thickness'],
                   'fraction_abraded': res['x'][1] / scale['fraction_abraded'],
-                  'fraction_dust': 0 / scale['fraction_dust'],
+                  'fraction_dust': fixed['fraction_dust'] / scale['fraction_dust'],
                   'porosity': res['x'][2]/scale['porosity'] }
-    elif model == 'b':
+    elif model == 'TAD':
         result = {'thickness': res['x'][0] / scale['thickness'],
                   'fraction_abraded': res['x'][1] / scale['fraction_abraded'],
-                  'fraction_dust': res['x'][2] / scale['fraction_dust']}
-    elif model == 'c':
+                  'fraction_dust': res['x'][2] / scale['fraction_dust'],
+                  'porosity': fixed['porosity']/scale['porosity'] }
+    elif model == 'TPAD':
         result = {'thickness': res['x'][0] / scale['thickness'],
                   'fraction_abraded': res['x'][1] / scale['fraction_abraded'],
                   'fraction_dust': res['x'][2] / scale['fraction_dust'],
                   'porosity': res['x'][3] / scale['porosity'],
                   }
 
-    elif model == 'd':
+    elif model == 'TP':
         result = {'thickness': res['x'][0] / scale['thickness'],
-                  'fraction_abraded': 0,
-                  'fraction_dust': 0,
+                  'fraction_abraded': fixed['fraction_abraded'] / scale['fraction_abraded'],
+                  'fraction_dust': fixed['fraction_dust'] / scale['fraction_dust'],
                   'porosity': res['x'][1] / scale['porosity'],
                   }
 

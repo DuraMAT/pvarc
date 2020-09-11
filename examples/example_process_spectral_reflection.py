@@ -32,7 +32,7 @@ plt.plot(wavelength, reflection,
 # Fit model
 x, ret = fit_arc_reflection_spectrum(wavelength,
                                      reflection / 1e2,
-                                     model='a',
+                                     model='TPA',
                                      aoi=8,
                                      wavelength_min=450,
                                      wavelength_max=1000)
