@@ -1,4 +1,4 @@
-"""Example for importing an experimental spectrum, fitting to the
+"""Example for generating a synthetic reflection specturm, fitting to the
 single-layer-coating model and finding the solar weighted photon reflectance
 and power enhancement due to the coating.
 
@@ -20,9 +20,9 @@ from pvarc.oceaninsight import read_oceanview_file
 # Create a synthetic reflection curve based on the theoretical model.
 wavelength = np.linspace(200,1100,500)
 param_true = {'thickness': 125,
- 'fraction_abraded': 0.2,
+ 'fraction_abraded': 0.05,
  'fraction_dust': 0.0,
- 'porosity': 0.25}
+ 'porosity': 0.3}
 reflection = arc_reflection_model(wavelength, **param_true)
 
 # reflection[wavelength<400] = reflection[wavelength<400] + np.linspace(0.02,0, np.sum(wavelength<400))
@@ -63,8 +63,8 @@ swpr_bk7 = solar_weighted_photon_reflection(wavelength_extend, reflection_BK7)
 # Calculate power enhancement due to coating.
 power_enchancement = swpr_bk7 - swpr
 
-
 # Compare fit vs simulated value.
+print('--\nComparison of true values vs. best fit')
 for p in ['thickness', 'porosity','fraction_abraded']:
     print('{}.\t True: {:.2f}, Fit: {:.2f}, '.format(p, param_true[p], x[p]))
 
