@@ -109,9 +109,6 @@ plt.show()
 # plt.savefig('example_out.png',dpi=200)
 
 
+
 ```
 
-
-# Data source
-Multicrystalline Si EQE curve taken from
-Investigation of interface limited charge extraction and recombination in polycrystalline silicon solar cell: Using DC and AC characterization techniques
