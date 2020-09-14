@@ -7,7 +7,13 @@ Many solar modules have an anti-reflection coating (ARC) on the air-glass interf
 
 # Installation
 
-To install using pip, run:
+To setup a virtual environment, run the following lines.
+```
+conda create --name pvarc python=3 numpy pandas scipy matplotlib tqdm
+pip install tmm
+```
+
+Next, to install using pip, run:
 ```
 pip install pvarc
 ```
