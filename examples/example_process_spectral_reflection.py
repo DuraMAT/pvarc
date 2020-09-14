@@ -32,10 +32,11 @@ plt.plot(wavelength, reflection,
 # Fit model
 x, ret = fit_arc_reflection_spectrum(wavelength,
                                      reflection / 1e2,
-                                     model='TPA',
+                                     model='TP',
                                      aoi=8,
                                      wavelength_min=450,
-                                     wavelength_max=1000)
+                                     wavelength_max=1000,
+                                     fixed={'fraction_abraded':0})
 wavelength_extend = np.linspace(300, 1250, 1000)
 reflection_fit = arc_reflection_model(wavelength_extend,**x)
 
