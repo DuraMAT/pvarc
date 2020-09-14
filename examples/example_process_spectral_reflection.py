@@ -44,7 +44,8 @@ swpr = solar_weighted_photon_reflection(wavelength_extend,reflection_fit)
 
 # Calculate SWPR for glass reference
 index_glass = index_BK7(wavelength_extend)
-reflection_BK7 = thick_slab_reflection('mixed', index_glass,
+reflection_BK7 = thick_slab_reflection('mixed',
+                                       index_substrate=index_glass,
                                        aoi=8,
                                        wavelength=wavelength_extend)
 swpr_bk7 = solar_weighted_photon_reflection(wavelength_extend, reflection_BK7)
