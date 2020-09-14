@@ -5,6 +5,15 @@ Analyze anti-reflection coating measurements on the air-glass interface of a sol
 
 Many solar modules have an anti-reflection coating (ARC) on the air-glass interface. This interface most often consists of a ~125 nm layer of porous silica. This package allows the user to simulate the reflection performance of these ARCs. It also provides convenient functions for calculating the solar-weighted photon reflectance which is a good figure-of-merit of the performance of a coating.
 
+# Installation
+
+To install using pip, run:
+```
+pip install pvarc
+```
+
+
+
 # Example
 
 The first example uses the ARC reflection model to generate a sythetic reflection curve. The coating parameters are then extracted using a fit to the same model. This example can be used to demonstrate the accuracy with which the true parameters can be extracted.
