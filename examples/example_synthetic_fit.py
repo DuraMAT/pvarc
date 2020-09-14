@@ -1,39 +1,36 @@
-"""Example for generating a synthetic reflection specturm, fitting to the
+"""Example for generating a synthetic reflection spectrum, fitting to the
 single-layer-coating model and finding the solar weighted photon reflectance
 and power enhancement due to the coating.
 
 Todd Karin
-09/10/2020
 """
 
 import numpy as np
 import pandas as pd
 import matplotlib
+
 matplotlib.use('TkAgg')
 import matplotlib.pyplot as plt
 
 from pvarc import index_BK7, thick_slab_reflection, \
     solar_weighted_photon_reflection, fit_arc_reflection_spectrum, \
     arc_reflection_model
-from pvarc.oceaninsight import read_oceanview_file
 
-# Create a synthetic reflection curve based on the theoretical model.
-wavelength = np.linspace(200,1100,500)
-param_true = {'thickness': 125,
- 'fraction_abraded': 0.05,
- 'fraction_dust': 0.0,
- 'porosity': 0.3}
+# Create a synthetic reflection curve based on the theoretical model. To run on
+# a different dataset, simply import the data as `wavelength` and `reflection`.
+wavelength = np.linspace(200, 1100, 500)
+param_true = {
+    'thickness': 125,
+    'fraction_abraded': 0.05,
+    'fraction_dust': 0.0,
+    'porosity': 0.3}
 reflection = arc_reflection_model(wavelength, **param_true)
-
-# reflection[wavelength<400] = reflection[wavelength<400] + np.linspace(0.02,0, np.sum(wavelength<400))
-# reflection[wavelength>1000] = reflection[wavelength>1000] + np.linspace(0,0.02, np.sum(wavelength>1000))
-
-reflection = reflection + np.random.normal(0,2e-4,wavelength.shape)
+reflection = reflection + np.random.normal(0, 2e-4, wavelength.shape)
 
 # Plot data
 plt.figure(0)
 plt.clf()
-plt.plot(wavelength, 100*reflection,
+plt.plot(wavelength, 100 * reflection,
          label='Data',
          color=[0, 0, 0.8])
 
@@ -47,10 +44,10 @@ x, ret = fit_arc_reflection_spectrum(wavelength,
                                      method='basinhopping',
                                      verbose=True)
 wavelength_extend = np.linspace(300, 1250, 1000)
-reflection_fit = arc_reflection_model(wavelength_extend,**x)
+reflection_fit = arc_reflection_model(wavelength_extend, **x)
 
 # Calculate solar weighted photon reflection (SWPR) using fit
-swpr = solar_weighted_photon_reflection(wavelength_extend,reflection_fit)
+swpr = solar_weighted_photon_reflection(wavelength_extend, reflection_fit)
 
 # Calculate SWPR for glass reference
 index_glass = index_BK7(wavelength_extend)
@@ -65,7 +62,7 @@ power_enchancement = swpr_bk7 - swpr
 
 # Compare fit vs simulated value.
 print('--\nComparison of true values vs. best fit')
-for p in ['thickness', 'porosity','fraction_abraded']:
+for p in ['thickness', 'porosity', 'fraction_abraded']:
     print('{}.\t True: {:.2f}, Fit: {:.2f}, '.format(p, param_true[p], x[p]))
 
 # Plot theory.
