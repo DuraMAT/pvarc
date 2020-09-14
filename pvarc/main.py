@@ -219,7 +219,11 @@ def thin_film_reflection(polarization, index_film, index_substrate,
 def thin_film_reflection_fast(wavelength, thickness=120, aoi=8, porosity=0.1):
     """
 
-    Calculates the reflection from a stack
+    Calculates the reflection from a stack. Note an out of bound error will
+    occur if the input parameters are out of bounds from the pre-calculated
+    values.
+
+    See Also : build_arc_reflection_model_interpolator_data
 
     Parameters
     ----------
@@ -599,8 +603,8 @@ def fit_arc_reflection_spectrum(wavelength,
     #     raise Exception('aoi must be 8 degrees.')
 
     thickness_min = 50
-    thickness_max = 250
-    porosity_max = 0.5
+    thickness_max = 245
+    porosity_max = 0.499
 
     if model == 'TPA':
         bounds = [(thickness_min * scale['thickness'],
@@ -763,7 +767,8 @@ def fit_arc_reflection_spectrum(wavelength,
 
     return result, res
 
-#
+
+
 # def calculate_coating_performance(wavelength, reflectance,
 #                                   eqe='multi-Si'):
 #     """
