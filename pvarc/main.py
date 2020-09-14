@@ -251,53 +251,6 @@ def thin_film_reflection_fast(wavelength, thickness=120, aoi=8, porosity=0.1):
 
     return reflection
 
-
-
-def get_AM1p5_spectrum():
-    cd = os.path.dirname(os.path.abspath(__file__))
-
-    df = pd.read_csv(os.path.join(cd, 'astmg173.csv'), skiprows=1)
-    return df
-
-
-def solar_weighted_photon_reflection(wavelength,
-                                     reflection,
-                                     wavelength_min=400,
-                                     wavelength_max=1100):
-    """
-    Solar-weighted photon reflectance
-
-    Parameters
-    ----------
-    wavelength
-    reflection
-    wavelength_min
-    wavelength_max
-
-    Returns
-    -------
-
-    """
-    cd = os.path.dirname(os.path.abspath(__file__))
-
-    sun = pd.read_csv(os.path.join(cd, 'astmg173.csv'), skiprows=1)
-
-    cax = np.logical_and(wavelength > wavelength_min,
-                         wavelength < wavelength_max)
-    wavelength = wavelength[cax]
-    reflection = reflection[cax]
-    # wavelength = np.linspace(200,1100,20)
-
-    AM1p5 = np.interp(wavelength, sun['wavelength nm'],
-                      sun['Global tilt  W*m-2*nm-1'])
-    dwavelength = np.diff(wavelength)
-    dwavelength = np.append(dwavelength, dwavelength[-1])
-
-    photon_energy = 1 / wavelength
-    swr = np.sum(dwavelength * AM1p5 / photon_energy * reflection) / \
-          np.sum(dwavelength * AM1p5 / photon_energy)
-    return swr
-
 #
 # def get_eqe(wavelength,
 #             type='multi-Si'):
