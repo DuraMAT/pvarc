@@ -252,19 +252,19 @@ def solar_weighted_photon_reflection(wavelength,
           np.sum(dwavelength * AM1p5 / photon_energy)
     return swr
 
-
-def get_eqe(wavelength,
-            type='multi-Si'):
-    cd = os.path.dirname(os.path.abspath(__file__))
-
-    df = pd.read_csv(os.path.join(cd, 'multi_Si_eqe.csv'))
-
-    # eqe = np.interp(wavelength, df['wavelength'], df['eqe'])
-
-    f = interp1d(df['wavelength'], df['eqe'], kind='linear')
-    eqe = f(wavelength)
-
-    return eqe
+#
+# def get_eqe(wavelength,
+#             type='multi-Si'):
+#     cd = os.path.dirname(os.path.abspath(__file__))
+#
+#     df = pd.read_csv(os.path.join(cd, 'multi_Si_eqe.csv'))
+#
+#     # eqe = np.interp(wavelength, df['wavelength'], df['eqe'])
+#
+#     f = interp1d(df['wavelength'], df['eqe'], kind='linear')
+#     eqe = f(wavelength)
+#
+#     return eqe
 
 
 def arc_reflection_model(wavelength,
