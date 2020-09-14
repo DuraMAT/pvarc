@@ -447,7 +447,8 @@ def fit_arc_reflection_spectrum(wavelength,
                                 model='d',
                                 fixed=None,
                                 verbose=False,
-                                method='minimize',
+                                method='basinhopping',
+                                niter=20,
                                 wavelength_min=450,
                                 wavelength_max=1000):
     """
@@ -503,6 +504,10 @@ def fit_arc_reflection_spectrum(wavelength,
     method : str
 
         Optimization method, can be 'minimize' or 'basinhopping'
+
+    niter : int
+
+        Number of basinhopping steps if method == 'basinhopping'
 
     wavelength_min : float
 
@@ -698,8 +703,7 @@ def fit_arc_reflection_spectrum(wavelength,
 
         residual = np.mean(
             np.sqrt(np.abs(reflectance_model - reflectance) ** 2))
-        if verbose:
-            print('x: ', x)
+
         return residual
 
     if method == 'minimize':
@@ -714,20 +718,21 @@ def fit_arc_reflection_spectrum(wavelength,
     elif method == 'basinhopping':
 
         def basinhopping_callback(x, f, accept):
-            if model == 'b' and verbose:
+            if model == 'TPA' and verbose:
                 # print('x:', x)
                 print(
-                    '--\nThickness: {:03.2f}, Fraction Abraded: {:.1%}, Fraction dust: {:.1%}'.format(
+                    '--\nThickness: {:03.2f}, Fraction Abraded: {:.1%}, Porosity: {:.1%}'.format(
                         x[0] / scale['thickness'],
                         x[1] / scale['fraction_abraded'],
-                        x[2] / scale['fraction_dust'])
+                        x[2] / scale['porosity']
+                    )
                 )
 
         res = basinhopping(arc_coating_error_function,
                            x0=x0_list,
-                           niter=10,
+                           niter=niter,
                            minimizer_kwargs={'bounds': bounds},
-                           disp=True,
+                           disp=verbose,
                            callback=basinhopping_callback
                            )
 
