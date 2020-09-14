@@ -2,6 +2,31 @@ import numpy as np
 import pandas as pd
 
 def read_oceanview_file(filename):
+    """
+    Read spectral file saved using Ocean Insight oceanview spectrometer
+    software.
+
+    Parameters
+    ----------
+    filename : str
+
+        filename to import
+
+    Returns
+    -------
+
+    data : dict
+
+        Dictionary containing data from file. Includes fields:
+
+        filename: name of file.
+        wavelength: wavlength in nm
+        value: Spectral data, can be reflectance, intensity, etc.
+        Number of Pixels in Spectrum: length of spectrum.
+        Integration Time (sec): integrationg time in seconds.
+        Scans to average: number of scans to average.
+
+    """
     data = {}
     data['filename'] = filename
 
@@ -42,6 +67,26 @@ def read_oceanview_file(filename):
 
 
 def read_oceanview_image_set(filenames):
+    """
+    Import a set of files using read_oceanview_file
+
+    Parameters
+    ----------
+    filenames : list
+
+        list of filenames
+
+    Returns
+    -------
+
+    data : dict
+
+        Data dictionary similar to the function read_oceanview_file, except
+        an additinoal field:
+
+        value_mean: mean of the 'value' at each wavelength.
+
+    """
     if len(filenames) == 0:
         raise Exception('no filenames given.')
 
