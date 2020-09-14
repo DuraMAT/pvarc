@@ -1,6 +1,6 @@
 import numpy as np
 import pandas as pd
-import tmm
+from tmm import coh_tmm, unpolarized_RT
 from time import time
 from numpy import pi, inf
 import os
@@ -23,9 +23,8 @@ thin_film_interpolator = RegularGridInterpolator(
      thin_film_reflection_data['porosity']),
     thin_film_reflection_data['reflectance_uint16'].astype('float') *
     thin_film_reflection_data['reflectance_scale_factor'],
-    bounds_error=False,
-    fill_value=0)
-
+    bounds_error=True,
+    fill_value=np.nan)
 
 # print('Time to import interpolator: {}'.format(time() - start_time))
 
@@ -37,8 +36,19 @@ def index_BK7(wavelength):
     https://refractiveindex.info/?shelf=glass&book=BK7&page=SCHOTT
 
 
-    :param wavelength:
-    :return:
+    Parameters
+    ----------
+    wavelength : numeric
+
+        Wavelength in nm.
+
+    Returns
+    -------
+
+    index : numeric
+
+        Index of refraction of BK7 class.
+
     """
     wavelength = wavelength / 1000
     n = np.sqrt(1 + \
@@ -53,15 +63,28 @@ def index_BK7(wavelength):
 
 def index_porous_silica(wavelength, porosity=0.5):
     """
+    Calculates index of refraction for porous silica using the effective
+    medium approximation and volume averaging theory.
+
     https://refractiveindex.info/?shelf=main&book=SiO2&page=Malitson
 
     Parameters
     ----------
-    wavelength
-    porosity
+    wavelength : numeric
+
+        Wavelength in nm.
+
+    porosity : float
+
+        Fractional porosity, a number from 0 to 1.0.
+
 
     Returns
     -------
+
+    index : numeric
+
+        Index of refraction of BK7 class.
 
     """
     wavelength = wavelength / 1000
@@ -82,18 +105,44 @@ def index_porous_silica(wavelength, porosity=0.5):
 
 
 def thick_slab_reflection(polarization, index_substrate, aoi, wavelength):
+    """
+    Reflection from a thick slab of material.
+
+    Parameters
+    ----------
+    polarization : str
+
+        Light polarization, can be "s" or "p" or "mixed"
+
+    index_substrate : (N,) ndarray
+
+        Index of refraction of the slab of material evaluated at the
+        wavelengths specified in the `wavelength` input.
+
+    aoi : float
+
+        Angle of incidence in degrees
+
+    wavelength : (N,) ndarray
+
+        wavelength in nm, must be the same length as index_substrate.
+
+    Returns
+    -------
+
+    """
     wavelength = wavelength.astype('float')
     degree = pi / 180
     R = np.zeros_like(wavelength)
     if polarization in ['s', 'p']:
         for j in range(len(R)):
-            R[j] = \
-                tmm.coh_tmm(polarization, [1.0003, index_substrate[j]],
+            R[j] = coh_tmm(polarization,
+                           [1.0003, index_substrate[j]],
                             [inf, inf],
                             aoi * degree, wavelength[j])['R']
     elif polarization == 'mixed':
         for j in range(len(R)):
-            R[j] = tmm.unpolarized_RT([1.0003, index_substrate[j]], [inf, inf],
+            R[j] = unpolarized_RT([1.0003, index_substrate[j]], [inf, inf],
                                       aoi * degree, wavelength[j])['R']
     else:
         raise Exception("polarization must be 's','p' or 'mixed'")
@@ -127,11 +176,13 @@ def thin_film_reflection(polarization, index_film, index_substrate,
 
     d_list = [np.inf, film_thickness, np.inf]
 
+    index_air = 1.0003
+
     R = np.zeros_like(wavelength)
     if polarization in ['s', 'p']:
         for j in range(len(R)):
             n_list = [1.0003, index_film[j], index_substrate[j]]
-            R[j] = tmm.coh_tmm(polarization,
+            R[j] = coh_tmm(polarization,
                                n_list,
                                d_list, aoi * degree, wavelength[j])['R']
     elif polarization == 'mixed':
@@ -141,8 +192,8 @@ def thin_film_reflection(polarization, index_film, index_substrate,
             def unpolarized_RT_func(index_film, index_substrate, aoi,
                                     film_thickness,
                                     wavelength, ):
-                return tmm.unpolarized_RT(
-                    n_list=[1.0003, index_film, index_substrate],
+                return unpolarized_RT(
+                    n_list=[index_air, index_film, index_substrate],
                     d_list=[np.inf, film_thickness, np.inf],
                     th_0=aoi * degree,
                     lam_vac=wavelength)['R']
@@ -154,8 +205,8 @@ def thin_film_reflection(polarization, index_film, index_substrate,
         else:
 
             for j in range(len(R)):
-                n_list = [1.0003, index_film[j], index_substrate[j]]
-                R[j] = tmm.unpolarized_RT(n_list,
+                n_list = [index_air, index_film[j], index_substrate[j]]
+                R[j] = unpolarized_RT(n_list,
                                           d_list,
                                           aoi * degree,
                                           wavelength[j])['R']
@@ -190,21 +241,16 @@ def thin_film_reflection_fast(wavelength, thickness=120, aoi=8, porosity=0.1):
 
     """
 
-    # TODO: Reduce the size of the calculated fast data values.
-    coords = np.array([thickness * np.ones_like(wavelength),
+    coords = np.array([np.full_like(wavelength, thickness),
                        wavelength,
-                       aoi * np.ones_like(wavelength),
-                       porosity * np.ones_like(wavelength)
+                       np.full_like(wavelength, aoi),
+                       np.full_like(wavelength, porosity)
                        ]).transpose()
 
     reflection = thin_film_interpolator(coords)
 
     return reflection
 
-
-def BK7_reflection(polarization, aoi, wavelength):
-    return thick_slab_reflection(polarization, index_BK7(wavelength), aoi,
-                                 wavelength)
 
 
 def get_AM1p5_spectrum():
