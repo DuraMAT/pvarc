@@ -12,19 +12,24 @@ from tqdm import tqdm
 
 # Inport the calculated thin film reflection data. This interpolator is used for
 # the fast calculations.
+
 cd = os.path.dirname(os.path.abspath(__file__))
-thin_film_reflection_data = np.load(
+_thin_film_reflectance_data_full_path = os.path.join(
     os.path.join(cd, 'thin_film_reflectance_calculated_values.npz'))
 
+_thin_film_reflection_data = np.load(_thin_film_reflectance_data_full_path)
+
 thin_film_interpolator = RegularGridInterpolator(
-    (thin_film_reflection_data['thickness'],
-     thin_film_reflection_data['wavelength'],
-     thin_film_reflection_data['aoi'],
-     thin_film_reflection_data['porosity']),
-    thin_film_reflection_data['reflectance_uint16'].astype('float') *
-    thin_film_reflection_data['reflectance_scale_factor'],
+    (_thin_film_reflection_data['thickness'],
+     _thin_film_reflection_data['wavelength'],
+     _thin_film_reflection_data['aoi'],
+     _thin_film_reflection_data['porosity']),
+    _thin_film_reflection_data['reflectance_uint16'].astype('float') *
+    _thin_film_reflection_data['reflectance_scale_factor'],
     bounds_error=True,
     fill_value=np.nan)
+
+
 
 # print('Time to import interpolator: {}'.format(time() - start_time))
 
@@ -47,7 +52,7 @@ def index_BK7(wavelength):
 
     index : numeric
 
-        Index of refraction of BK7 class.
+        Index of refraction of BK7 glass.
 
     """
     wavelength = wavelength / 1000
@@ -58,6 +63,32 @@ def index_BK7(wavelength):
                         wavelength ** 2 - 0.0200179144) + \
                 (1.01046945 * wavelength ** 2) / (wavelength ** 2 - 103.560653)
                 )
+    return n
+
+
+def index_glass(wavelength, type='soda-lime-low-iron'):
+    """
+    Data from https://refractiveindex.info/?shelf=glass&book=soda-lime&page=Rubin-clear
+
+    Rubin 1985. Range of validity is 310-4600 nm.
+
+    Parameters
+    ----------
+    wavelength : ndarray
+        wavelength in nm
+
+    type : str
+        Type of glass. Options are:
+
+        'soda-lime-low-iron'
+
+    Returns
+    -------
+
+    """
+    wavelength = wavelength / 1000
+    n = 1.5130 - 0.003169 * wavelength ** 2 + 0.003962 * wavelength ** -2
+
     return n
 
 
@@ -138,12 +169,12 @@ def thick_slab_reflection(polarization, index_substrate, aoi, wavelength):
         for j in range(len(R)):
             R[j] = coh_tmm(polarization,
                            [1.0003, index_substrate[j]],
-                            [inf, inf],
-                            aoi * degree, wavelength[j])['R']
+                           [inf, inf],
+                           aoi * degree, wavelength[j])['R']
     elif polarization == 'mixed':
         for j in range(len(R)):
             R[j] = unpolarized_RT([1.0003, index_substrate[j]], [inf, inf],
-                                      aoi * degree, wavelength[j])['R']
+                                  aoi * degree, wavelength[j])['R']
     else:
         raise Exception("polarization must be 's','p' or 'mixed'")
     return R
@@ -183,8 +214,8 @@ def thin_film_reflection(polarization, index_film, index_substrate,
         for j in range(len(R)):
             n_list = [1.0003, index_film[j], index_substrate[j]]
             R[j] = coh_tmm(polarization,
-                               n_list,
-                               d_list, aoi * degree, wavelength[j])['R']
+                           n_list,
+                           d_list, aoi * degree, wavelength[j])['R']
     elif polarization == 'mixed':
 
         if vectorize:
@@ -207,9 +238,9 @@ def thin_film_reflection(polarization, index_film, index_substrate,
             for j in range(len(R)):
                 n_list = [index_air, index_film[j], index_substrate[j]]
                 R[j] = unpolarized_RT(n_list,
-                                          d_list,
-                                          aoi * degree,
-                                          wavelength[j])['R']
+                                      d_list,
+                                      aoi * degree,
+                                      wavelength[j])['R']
 
     else:
         raise Exception("polarization must be 's','p' or 'mixed'")
@@ -254,6 +285,7 @@ def thin_film_reflection_fast(wavelength, thickness=120, aoi=8, porosity=0.1):
     reflection = thin_film_interpolator(coords)
 
     return reflection
+
 
 #
 # def get_eqe(wavelength,
@@ -333,30 +365,62 @@ def arc_reflection_model(wavelength,
     return reflectance
 
 
-
-def build_arc_reflection_model_interpolator_data():
+def build_arc_reflection_model_interpolator_data(thickness=None,
+                                                 wavelength=None,
+                                                 porosity=None,
+                                                 index_substrate=None,
+                                                 aoi=None):
     """
     Calculate values of the thin film reflectance model for a variety of
-    thickness, porosity, wavelength and aoi.
+    thickness, porosity, wavelength and aoi. These precalculated values offer
+    a great speedup for fitting interferometric models to data.
 
-    File saved as 'thin_film_reflectance_calculated_values.npz'. Data is
-    scaled to uint16.
+    Data saved as 'thin_film_reflectance_calculated_values.npz' in the
+    current installation directory. Data is scaled to uint16 before saving in
+    order to reduce file size.
+
+    This function can be called without specifying any inputs, if so default
+    values will be used.
+
+    Parameters
+    ----------
+    thickness : ndarray
+
+        array of coating thickness values in nm
+
+    wavelength : ndarray
+
+        array of wavelength values in nm
+
+    porosity : ndarray
+
+        array of fractional coating porosity, unitless.
+
+    index_substrate
+
+        array of the index of the substrate at the wavelength values
+        specified in `wavelength`
+
+    aoi : ndarray
+
+        array of angle of incidence in degrees. 0 degrees corresponds to
+        normal incidence.
 
     Returns
     -------
+    thickness, wavelength, aoi, porosity, thin_film_reflectance
 
     """
 
 
-    thickness = np.arange(0, 250, 2).astype('float')
-    # wavelength = np.linspace(190, 1300, 300)
-    wavelength = np.arange(190,1310,5).astype('float')
-    porosity = np.array(
+    thickness = thickness or np.arange(0, 250, 5).astype('float')
+    wavelength = wavelength or np.arange(190, 1310, 5).astype('float')
+    porosity = porosity or np.array(
         [0, 0.05, 0.10, 0.15, 0.20, 0.25, 0.3, 0.35, 0.4, 0.5, 0.75, 1.0])
 
-    index_glass = index_BK7(wavelength)
+    index_substrate = index_substrate or index_glass(wavelength)
 
-    aoi = np.array([0, 8, 30, 45, 60, 75, 85])
+    aoi = aoi or np.array([0, 8, 30, 45, 60, 75, 85])
 
     thin_film_reflectance = np.zeros((len(thickness), len(wavelength),
                                       len(aoi), len(porosity))
@@ -366,11 +430,11 @@ def build_arc_reflection_model_interpolator_data():
         for j in range(len(aoi)):
             for m in range(len(porosity)):
                 index_film = index_porous_silica(wavelength,
-                                                       porosity=porosity[m])
+                                                 porosity=porosity[m])
                 thin_film_reflectance[k, :, j, m] = thin_film_reflection(
                     'mixed',
                     index_film=index_film,
-                    index_substrate=index_glass,
+                    index_substrate=index_substrate,
                     film_thickness=thickness[k],
                     aoi=aoi[j],
                     wavelength=wavelength)
@@ -378,20 +442,28 @@ def build_arc_reflection_model_interpolator_data():
     # Compress data
     reflectance_scale_factor = 1 / (2 ** 16 - 1)
     reflectance_uint16 = (
-                thin_film_reflectance / reflectance_scale_factor).astype(
+            thin_film_reflectance / reflectance_scale_factor).astype(
         'uint16')
 
-    filename = 'thin_film_reflectance_calculated_values.npz'
-    np.savez(filename,
+    thickness_bounds = np.array([np.min(thickness), np.max(thickness)])
+    aoi_bounds = np.array([np.min(aoi), np.max(aoi)])
+    porosity_bounds = np.array([np.min(porosity), np.max(porosity)])
+    wavelength_bounds = np.array([np.min(wavelength), np.max(wavelength)])
+
+    np.savez(_thin_film_reflectance_data_full_path,
              aoi=aoi,
              wavelength=wavelength,
              thickness=thickness,
              porosity=porosity,
-             index_glass=index_glass,
+             index_substrate=index_substrate,
              reflectance_scale_factor=reflectance_scale_factor,
-             reflectance_uint16=reflectance_uint16
+             reflectance_uint16=reflectance_uint16,
+             thickness_bounds=thickness_bounds,
+             aoi_bounds=aoi_bounds,
+             porosity_bounds=porosity_bounds,
+             wavelength_bounds=wavelength_bounds
              )
-    print('File saved as: {}'.format(filename))
+    print('File saved as: {}'.format(_thin_film_reflectance_data_full_path))
 
     return thickness, wavelength, aoi, porosity, thin_film_reflectance
 
@@ -541,15 +613,15 @@ def fit_arc_reflection_spectrum(wavelength,
         x0 = estimate_arc_reflection_model_params(wavelength, reflectance)
 
     fixed_default = {'thickness': 125,
-                 'fraction_abraded': 0,
-                 'fraction_dust': 0,
-                 'porosity': 0.3}
+                     'fraction_abraded': 0,
+                     'fraction_dust': 0,
+                     'porosity': 0.3}
     if fixed == None:
         fixed = fixed_default
     else:
         for p in fixed_default:
             if p not in fixed:
-                fixed[p] =fixed_default[p]
+                fixed[p] = fixed_default[p]
 
     # print('x0: ', x0)
 
@@ -579,7 +651,7 @@ def fit_arc_reflection_spectrum(wavelength,
                    x0['porosity'] * scale['porosity'],
                    ]
     else:
-        raise Exception('model must be "a" or "b" or "c"')
+        raise Exception('model options are "TP", "TPA", "TPAD" or "TAD"')
 
     # Increase by a factor of 100 to improve numeric accuracy.
     reflectance = reflectance * 100
@@ -603,7 +675,7 @@ def fit_arc_reflection_spectrum(wavelength,
     #     raise Exception('aoi must be 8 degrees.')
 
     thickness_min = 50
-    thickness_max = 245
+    thickness_max = 200
     porosity_max = 0.499
 
     if model == 'TPA':
@@ -700,8 +772,10 @@ def fit_arc_reflection_spectrum(wavelength,
             thickness = x[0] / scale['thickness']
             porosity = x[1] / scale['porosity']
             reflectance_model = arc_model_c(wavelength, thickness,
-                                            fraction_abraded=fixed['fraction_abraded'],
-                                            fraction_dust=fixed['fraction_dust'],
+                                            fraction_abraded=fixed[
+                                                'fraction_abraded'],
+                                            fraction_dust=fixed[
+                                                'fraction_dust'],
                                             porosity=porosity)
 
         else:
@@ -766,8 +840,6 @@ def fit_arc_reflection_spectrum(wavelength,
                   }
 
     return result, res
-
-
 
 # def calculate_coating_performance(wavelength, reflectance,
 #                                   eqe='multi-Si'):
