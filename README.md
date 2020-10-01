@@ -7,13 +7,13 @@ Many solar modules have an anti-reflection coating (ARC) on the air-glass interf
 
 # Installation
 
-To setup a virtual environment, run the following lines.
+To setup a virtual environment, create a virtual environment:
 ```
-conda create --name pvarc python=3 numpy pandas scipy matplotlib tqdm
+conda create --name pvarc python=3 numpy pandas scipy matplotlib
 pip install tmm
 ```
 
-Next, to install using pip, run:
+To install using pip, run:
 ```
 pip install pvarc
 ```
@@ -38,9 +38,13 @@ import matplotlib
 matplotlib.use('TkAgg')
 import matplotlib.pyplot as plt
 
-from pvarc import index_BK7, thick_slab_reflection, \
-    solar_weighted_photon_reflection, fit_arc_reflection_spectrum, \
-    arc_reflection_model
+
+from pvarc import single_interface_reflectance
+from pvarc.metrics import solar_weighted_photon_reflection
+from pvarc.fit import fit_arc_reflection_spectrum, arc_reflection_model
+from pvarc.materials import refractive_index_glass
+from pvarc.oceaninsight import read_oceanview_file
+
 
 # Create a synthetic reflection curve based on the theoretical model. To run on
 # a different dataset, simply import the data as `wavelength` and `reflection`.
@@ -76,11 +80,10 @@ reflection_fit = arc_reflection_model(wavelength_extend, **x)
 swpr = solar_weighted_photon_reflection(wavelength_extend, reflection_fit)
 
 # Calculate SWPR for glass reference
-index_glass = index_BK7(wavelength_extend)
-reflection_BK7 = thick_slab_reflection('mixed',
-                                       index_substrate=index_glass,
-                                       aoi=8,
-                                       wavelength=wavelength_extend)
+index_glass = refractive_index_glass(wavelength_extend)
+reflection_BK7 = single_interface_reflectance(n0=1.0003,
+                                       n1=index_glass,
+                                       aoi=8)
 swpr_bk7 = solar_weighted_photon_reflection(wavelength_extend, reflection_BK7)
 
 # Calculate power enhancement due to coating.
@@ -113,6 +116,7 @@ plt.xlim([300, 1250])
 plt.legend()
 plt.show()
 # plt.savefig('example_out.png',dpi=200)
+
 
 
 
