@@ -13,7 +13,7 @@ from numpy import pi, inf, cos, sin, exp
 
 
 
-def thick_slab_reflection_tmm(polarization, index_substrate, aoi, wavelength):
+def thick_slab_reflectance_tmm(polarization, index_substrate, aoi, wavelength):
     """
     Reflection from a thick slab of material.
 
@@ -58,7 +58,7 @@ def thick_slab_reflection_tmm(polarization, index_substrate, aoi, wavelength):
     return R
 
 
-def thin_film_reflection_tmm(polarization, index_film, index_substrate,
+def thin_film_reflectance_tmm(polarization, index_film, index_substrate,
                              film_thickness, aoi,
                              wavelength,
                              vectorize=False):
