@@ -24,12 +24,13 @@ def get_AM1p5_spectrum():
 
 
 def solar_weighted_photon_reflection(wavelength,
-                                     reflection,
+                                     reflectance,
                                      wavelength_min=400,
                                      wavelength_max=1100):
     """
     Calculate the solar-weighted photon reflectance (SWPR). This is equal to
-    the reflectance weighted by the photon flux.
+    the reflectance weighted by the photon flux. Note this function can be
+    also be used to calculate solar-weighted photon transmittance.
 
     Parameters
     ----------
@@ -39,7 +40,7 @@ def solar_weighted_photon_reflection(wavelength,
 
     reflection : ndarray
 
-        reflection at the wavelength values.
+        reflectance (or transmittance) at the wavelength values.
 
     wavelength_min : float
 
@@ -64,7 +65,7 @@ def solar_weighted_photon_reflection(wavelength,
     cax = np.logical_and(wavelength > wavelength_min,
                          wavelength < wavelength_max)
     wavelength = wavelength[cax]
-    reflection = reflection[cax]
+    reflectance = reflectance[cax]
     # wavelength = np.linspace(200,1100,20)
 
     AM1p5 = np.interp(wavelength, sun['wavelength nm'],
@@ -73,6 +74,7 @@ def solar_weighted_photon_reflection(wavelength,
     dwavelength = np.append(dwavelength, dwavelength[-1])
 
     photon_energy = 1 / wavelength
-    swpr = np.sum(dwavelength * AM1p5 / photon_energy * reflection) / \
+    swpr = np.sum(dwavelength * AM1p5 / photon_energy * reflectance) / \
           np.sum(dwavelength * AM1p5 / photon_energy)
     return swpr
+
