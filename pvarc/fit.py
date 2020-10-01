@@ -1,7 +1,7 @@
 import numpy as np
 from scipy.optimize import minimize, basinhopping
 from pvarc.materials import refractive_index_glass, refractive_index_porous_silica
-
+from pvarc import single_interface_reflectance, thin_film_reflectance
 
 
 def arc_reflection_model(wavelength,
