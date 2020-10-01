@@ -1,8 +1,7 @@
-"""Example for importing an experimental spectrum, fitting to the
-single-layer-coating model and finding the solar weighted photon reflectance
-and power enhancement due to the coating.
+"""Example test comparing fast explicit method and tmm method for thin film
+reflectance.
 
-Todd Karin
+toddkarin
 09/10/2020
 """
 
