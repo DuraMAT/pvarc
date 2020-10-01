@@ -1,2 +1,1 @@
 include pvarc/astmg173.csv
-include pvarc/thin_film_reflectance_calculated_values.npz
