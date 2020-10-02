@@ -18,8 +18,6 @@ To install using pip, run:
 pip install pvarc
 ```
 
-
-
 # Example
 
 The first example uses the ARC reflection model to generate a sythetic reflection curve. The coating parameters are then extracted using a fit to the same model. This example can be used to demonstrate the accuracy with which the true parameters can be extracted.
