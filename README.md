@@ -21,6 +21,7 @@ pip install pvarc
 # Example
 
 The first example uses the ARC reflection model to generate a sythetic reflection curve. The coating parameters are then extracted using a fit to the same model. This example can be used to demonstrate the accuracy with which the true parameters can be extracted.
+
 ```python
 """Example for generating a synthetic reflection spectrum, fitting to the
 single-layer-coating model and finding the solar weighted photon reflectance
@@ -38,7 +39,7 @@ import matplotlib.pyplot as plt
 
 
 from pvarc import single_interface_reflectance
-from pvarc.metrics import solar_weighted_photon_reflection
+from pvarc.metrics import solar_weighted_photon_reflectance
 from pvarc.fit import fit_arc_reflection_spectrum, arc_reflection_model
 from pvarc.materials import refractive_index_glass
 from pvarc.oceaninsight import read_oceanview_file
@@ -75,14 +76,14 @@ wavelength_extend = np.linspace(300, 1250, 1000)
 reflection_fit = arc_reflection_model(wavelength_extend, **x)
 
 # Calculate solar weighted photon reflection (SWPR) using fit
-swpr = solar_weighted_photon_reflection(wavelength_extend, reflection_fit)
+swpr = solar_weighted_photon_reflectance(wavelength_extend, reflection_fit)
 
 # Calculate SWPR for glass reference
 index_glass = refractive_index_glass(wavelength_extend)
 reflection_BK7 = single_interface_reflectance(n0=1.0003,
                                        n1=index_glass,
                                        aoi=8)
-swpr_bk7 = solar_weighted_photon_reflection(wavelength_extend, reflection_BK7)
+swpr_bk7 = solar_weighted_photon_reflectance(wavelength_extend, reflection_BK7)
 
 # Calculate power enhancement due to coating.
 power_enchancement = swpr_bk7 - swpr
@@ -114,6 +115,7 @@ plt.xlim([300, 1250])
 plt.legend()
 plt.show()
 # plt.savefig('example_out.png',dpi=200)
+
 
 
 
