@@ -23,7 +23,7 @@ def get_AM1p5_spectrum():
     return df
 
 
-def solar_weighted_photon_reflection(wavelength,
+def solar_weighted_photon_reflectance(wavelength,
                                      reflectance,
                                      wavelength_min=400,
                                      wavelength_max=1100):
