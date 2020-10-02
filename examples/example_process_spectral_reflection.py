@@ -13,7 +13,7 @@ import matplotlib.pyplot as plt
 from time import time
 from pvarc import single_interface_reflectance
 
-from pvarc.metrics import solar_weighted_photon_reflection
+from pvarc.metrics import solar_weighted_photon_reflectance
 from pvarc.fit import fit_arc_reflection_spectrum, arc_reflection_model
 from pvarc.materials import refractive_index_glass
 from pvarc.oceaninsight import read_oceanview_file
@@ -51,7 +51,7 @@ wavelength_extend = np.linspace(300, 1250, 1000)
 reflectance_fit = arc_reflection_model(wavelength_extend,**x)
 
 # Calculate solar weighted photon reflection (SWPR) using fit
-swpr = solar_weighted_photon_reflection(wavelength_extend,reflectance_fit)
+swpr = solar_weighted_photon_reflectance(wavelength_extend,reflectance_fit)
 
 # Calculate SWPR for glass reference
 index_substrate = refractive_index_glass(wavelength_extend)
@@ -61,7 +61,7 @@ reflection_glass = single_interface_reflectance(
     aoi=8,
     polarization='mixed')
 
-swpr_glass = solar_weighted_photon_reflection(wavelength_extend, reflection_glass)
+swpr_glass = solar_weighted_photon_reflectance(wavelength_extend, reflection_glass)
 
 # Calculate power enhancement due to coating.
 power_enchancement = swpr_glass - swpr
