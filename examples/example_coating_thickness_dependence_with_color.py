@@ -14,7 +14,6 @@ from colormath.color_conversions import XYZ_to_RGB, Spectral_to_XYZ
 
 from colormath.color_objects import SpectralColor
 
-
 from pvarc import thin_film_reflectance
 from pvarc.oceaninsight import read_oceanview_file
 from pvarc.materials import refractive_index_porous_silica, \
@@ -48,7 +47,7 @@ thickness_scan = np.array([0, 20, 40, 60, 80, 100, 120,
 
 for porosity in [0.15, 0.3]:
 
-    plt.figure(6, figsize=(3.7, 3))
+    plt.figure(0, figsize=(3.7, 3))
     plt.clf()
     ax = plt.axes()
     rect = ax.patch
