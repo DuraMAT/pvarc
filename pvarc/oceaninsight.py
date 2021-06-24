@@ -66,7 +66,7 @@ def read_oceanview_file(filename):
     return data
 
 
-def read_oceanview_image_set(filenames):
+def read_oceanview_set(filenames):
     """
     Import a set of files using read_oceanview_file
 
@@ -106,3 +106,12 @@ def read_oceanview_image_set(filenames):
     ref0['value_mean'] = value_mean
 
     return ref0
+
+def read_oceanview_noheader(filename):
+    df = pd.read_csv(filename,skiprows=2,
+                     delimiter='\t',
+                     header=None,
+                     names=['wavelength','value']
+
+                     )
+    return df
