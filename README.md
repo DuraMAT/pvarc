@@ -9,7 +9,7 @@ Many solar modules have an anti-reflection coating (ARC) on the air-glass interf
 
 To setup a virtual environment, create a virtual environment:
 ```
-conda create --name pvarc python=3 numpy pandas scipy matplotlib
+conda create --name pvarc -c conda-forge python=3 numpy pandas scipy matplotlib tqdm colour-science xlrd matplotlib-scalebar
 pip install tmm
 ```
 
