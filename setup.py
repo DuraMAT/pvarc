@@ -5,7 +5,7 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name="pvarc",
-    version="0.0.4",
+    version="0.0.5",
     author="toddkarin",
     author_email="pvtools.lbl@gmail.com",
     description="Analyze anti-reflection coatings on the air-glass interface of a photovoltaic module.",
@@ -14,7 +14,7 @@ setuptools.setup(
     url="https://github.com/DuraMAT/pvarc",
     packages=setuptools.find_packages(),
     include_package_data=True,
-    install_requires=['numpy','pandas','scipy','matplotlib','tmm'],
+    install_requires=['numpy','pandas','scipy','matplotlib','tmm','colour-science'],
     classifiers=[
         "Programming Language :: Python :: 3",
         "License :: OSI Approved :: MIT License",
