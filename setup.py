@@ -14,7 +14,7 @@ setuptools.setup(
     url="https://github.com/DuraMAT/pvarc",
     packages=setuptools.find_packages(),
     include_package_data=True,
-    install_requires=['numpy','pandas','scipy','matplotlib','tmm','colour-science'],
+    install_requires=['numpy','pandas','scipy','matplotlib','tmm','colour-science','tqdm'],
     classifiers=[
         "Programming Language :: Python :: 3",
         "License :: OSI Approved :: MIT License",
