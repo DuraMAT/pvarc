@@ -9,7 +9,8 @@ def arc_reflection_model(wavelength,
                          fraction_abraded=0,
                          porosity=0.3,
                          fraction_dust=0,
-                         aoi=8):
+                         aoi=8,
+                         n0=1.0003):
     """
     Return the reflection values for a model of an aged ARC. The reflection
     is a linear combination of reflection from a thin film of a variable
@@ -53,7 +54,7 @@ def arc_reflection_model(wavelength,
     index_substrate = refractive_index_glass(wavelength)
     index_film = refractive_index_porous_silica(wavelength, porosity=porosity)
     glass_reflectance = single_interface_reflectance(
-        n0=1.0003,
+        n0=n0,
         n1=index_substrate,
         polarization='mixed',
         aoi=aoi)
