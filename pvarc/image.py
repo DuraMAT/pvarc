@@ -22,7 +22,7 @@ from pvarc.metrics import solar_weighted_photon_reflectance
 #
 # from colour import xy_to_xyY, RGB_to_XYZ, XYZ_to_xyY
 # from skimage.color import rgb2xyz
-from scipy.interpolate import interp2d, griddata, RegularGridInterpolator
+from scipy.interpolate import griddata, RegularGridInterpolator
 
 
 def calculate_rgb_vs_thickness_porosity(
@@ -298,10 +298,13 @@ def calculate_porosity(x, y,
     return porosity
 
 
-def calculate_swpr(x, y, xy_distance_white=0.03):
-    interpolator_filename = os.path.join(os.path.dirname(__file__),
-                                         'rgb_to_thickness_porosity_data.csv')
-    df = pd.read_csv(interpolator_filename)
+def calculate_swpr(x, y, xy_distance_white=0.03,
+                   porosity_min=0,
+                   porosity_max=0.5,
+                   ):
+    df = get_thickness_porosity_interpolator_data()
+    df = df[np.logical_and(df['porosity'] > porosity_min,
+                           df['porosity'] < porosity_max)]
 
     xa = np.atleast_1d(x)
     ya = np.atleast_1d(y)
@@ -312,7 +315,7 @@ def calculate_swpr(x, y, xy_distance_white=0.03):
 
     white_idx = (xa.flatten() - 1 / 3) ** 2 + (
             ya.flatten() - 1 / 3) ** 2 < xy_distance_white ** 2
-    swpr_flat[white_idx] = 0
+    swpr_flat[white_idx] = df.iloc[0]['swpr']
 
     swpr = np.reshape(swpr_flat, xa.shape)
 
