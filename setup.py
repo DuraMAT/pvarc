@@ -5,7 +5,7 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name="pvarc",
-    version="0.0.7",
+    version="0.0.8",
     author="toddkarin",
     author_email="pvtools.lbl@gmail.com",
     description="Analyze anti-reflection coatings on the air-glass interface of a photovoltaic module.",
