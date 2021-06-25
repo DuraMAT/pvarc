@@ -188,32 +188,33 @@ def get_thickness_porosity_interpolator_data():
 
 # Not the best way to do this, but it avoids loading data and building the
 # interpolator every time the following functions are called.
-if os.path.exists(get_thickness_porosity_interpolator_filename()):
-    _tp_rgb = get_thickness_porosity_interpolator_data()
-
-    _thickness_list = np.unique(_tp_rgb['thickness'])
-    _porosity_list = np.unique(_tp_rgb['porosity'])
-
-    _tp_shape = (len(_thickness_list), len(_porosity_list))
-    _thickness_grid = np.array(_tp_rgb['thickness']).reshape(_tp_shape)
-    _porosity_grid = np.array(_tp_rgb['porosity']).reshape(_tp_shape)
-    _R_grid = np.array(_tp_rgb['R']).reshape(_tp_shape)
-    _G_grid = np.array(_tp_rgb['G']).reshape(_tp_shape)
-    _B_grid = np.array(_tp_rgb['B']).reshape(_tp_shape)
-
-    _R_interpolator = RegularGridInterpolator((_thickness_list, _porosity_list),
-                                              _R_grid,
-                                              bounds_error=False,
-                                              fill_value=np.nan)
-    _G_interpolator = RegularGridInterpolator((_thickness_list, _porosity_list),
-                                              _G_grid, bounds_error=False,
-                                              fill_value=np.nan)
-    _B_interpolator = RegularGridInterpolator((_thickness_list, _porosity_list),
-                                              _B_grid, bounds_error=False,
-                                              fill_value=np.nan)
-else:
+if not os.path.exists(get_thickness_porosity_interpolator_filename()):
     print('Building thickness porosity interpolator data...')
     build_rgb_to_thickness_porosity_interpolator_data()
+
+_tp_rgb = get_thickness_porosity_interpolator_data()
+
+_thickness_list = np.unique(_tp_rgb['thickness'])
+_porosity_list = np.unique(_tp_rgb['porosity'])
+
+_tp_shape = (len(_thickness_list), len(_porosity_list))
+_thickness_grid = np.array(_tp_rgb['thickness']).reshape(_tp_shape)
+_porosity_grid = np.array(_tp_rgb['porosity']).reshape(_tp_shape)
+_R_grid = np.array(_tp_rgb['R']).reshape(_tp_shape)
+_G_grid = np.array(_tp_rgb['G']).reshape(_tp_shape)
+_B_grid = np.array(_tp_rgb['B']).reshape(_tp_shape)
+
+_R_interpolator = RegularGridInterpolator((_thickness_list, _porosity_list),
+                                          _R_grid,
+                                          bounds_error=False,
+                                          fill_value=np.nan)
+_G_interpolator = RegularGridInterpolator((_thickness_list, _porosity_list),
+                                          _G_grid, bounds_error=False,
+                                          fill_value=np.nan)
+_B_interpolator = RegularGridInterpolator((_thickness_list, _porosity_list),
+                                          _B_grid, bounds_error=False,
+                                          fill_value=np.nan)
+
 
 
 def calculate_rgb(thickness, porosity):
