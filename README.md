@@ -6,17 +6,18 @@ Analyze anti-reflection coating measurements on the air-glass interface of a sol
 Many solar modules have an anti-reflection coating (ARC) on the air-glass interface. This interface most often consists of a ~125 nm layer of porous silica. This package allows the user to simulate the reflection performance of these ARCs. It also provides convenient functions for calculating the solar-weighted photon reflectance which is a good figure-of-merit of the performance of a coating.
 
 # Installation
-
-To setup a virtual environment, create a virtual environment:
-```
-conda create --name pvarc -c conda-forge python=3 numpy pandas scipy matplotlib tqdm colour-science xlrd matplotlib-scalebar
-pip install tmm
-```
-
 To install using pip, run:
 ```
 pip install pvarc
 ```
+
+To setup a virtual environment using conda/pip, create a virtual environment:
+```
+conda create --name pvarc -c conda-forge python=3 numpy pandas scipy matplotlib tqdm colour-science xlrd matplotlib-scalebar
+conda activate pvarc
+pip install tmm pvarc
+```
+
 
 # Example
 
