@@ -216,7 +216,6 @@ _B_interpolator = RegularGridInterpolator((_thickness_list, _porosity_list),
                                           fill_value=np.nan)
 
 
-
 def calculate_rgb(thickness, porosity):
     coords = np.concatenate((np.atleast_1d(thickness).flatten()[:, np.newaxis],
                              np.atleast_1d(porosity).flatten()[:, np.newaxis]),
@@ -234,6 +233,8 @@ def calculate_rgb(thickness, porosity):
 def calculate_thickness(x, y, xy_distance_white=0.03,
                         porosity_min=0,
                         porosity_max=0.5,
+                        thickness_min=0,
+                        thickness_max=186,
                         ):
     """
 
@@ -249,8 +250,12 @@ def calculate_thickness(x, y, xy_distance_white=0.03,
     """
 
     df = get_thickness_porosity_interpolator_data()
-    df = df[np.logical_and(df['porosity'] > porosity_min,
-                           df['porosity'] < porosity_max)]
+    df = df[np.logical_and.reduce(
+        (df['porosity'] >= porosity_min,
+         df['porosity'] <= porosity_max,
+         df['thickness'] >= thickness_min,
+         df['thickness'] <= thickness_max,
+         ))]
     xa = np.atleast_1d(x)
     ya = np.atleast_1d(y)
 
@@ -275,11 +280,16 @@ def calculate_porosity(x, y,
                        xy_distance_white=0.03,
                        porosity_min=0,
                        porosity_max=0.5,
+                       thickness_min=0,
+                       thickness_max=186,
                        ):
     df = get_thickness_porosity_interpolator_data()
-    df = df[np.logical_and(df['porosity'] > porosity_min,
-                           df['porosity'] < porosity_max)]
-
+    df = df[np.logical_and.reduce(
+        (df['porosity'] >= porosity_min,
+         df['porosity'] <= porosity_max,
+         df['thickness'] >= thickness_min,
+         df['thickness'] <= thickness_max,
+         ))]
     xa = np.atleast_1d(x)
     ya = np.atleast_1d(y)
 
@@ -302,10 +312,16 @@ def calculate_porosity(x, y,
 def calculate_swpr(x, y, xy_distance_white=0.03,
                    porosity_min=0,
                    porosity_max=0.5,
+                   thickness_min=0,
+                   thickness_max=186,
                    ):
     df = get_thickness_porosity_interpolator_data()
-    df = df[np.logical_and(df['porosity'] > porosity_min,
-                           df['porosity'] < porosity_max)]
+    df = df[np.logical_and.reduce(
+        (df['porosity'] >= porosity_min,
+         df['porosity'] <= porosity_max,
+         df['thickness'] >= thickness_min,
+         df['thickness'] <= thickness_max,
+         ))]
 
     xa = np.atleast_1d(x)
     ya = np.atleast_1d(y)
