@@ -11,6 +11,8 @@ from pvarc.materials import refractive_index_porous_silica, \
     refractive_index_glass
 # from pvarc.color import spectrum_to_rgb, spectrum_to_XYZ, spectrum_to_xyY
 from pvarc.metrics import solar_weighted_photon_reflectance
+
+from pvarc.color import spectrum_to_rgb
 # from glob import glob
 #
 # from pvarc.oceaninsight import read_oceanview_file
@@ -24,6 +26,8 @@ from pvarc.metrics import solar_weighted_photon_reflectance
 # from skimage.color import rgb2xyz
 from scipy.interpolate import griddata, RegularGridInterpolator
 
+from pvarc.fit import arc_reflection_model
+
 
 def calculate_rgb_vs_thickness_porosity(
         camera='Ximea-MC050cg_combined_labeled.csv',
@@ -33,7 +37,62 @@ def calculate_rgb_vs_thickness_porosity(
         thickness_step=0.4,
         porosity_max=0.5,
         porosity_step=0.01,
-        aoi=0):
+        aoi=0,
+        swpr_wavelength_min=400,
+        swpr_wavelength_max=1100):
+    """
+    Using provided spectral response data from a camera, spectral
+    transmission through an opical system and a light source, calculate the
+    expected color as a function of thickness and porosity of a coating of
+    porous silica on glass.
+
+    Parameters
+    ----------
+    camera : str
+        Filename of csv file storing the camera RGB.
+
+    light_source : str
+        Filename of csv file containing light source spectrum.
+
+    optical_system : str
+        Filename of csv file containing optical system transmittance.
+
+    thickness_max : float
+        Maximum thickness for calculating RGB colors.
+
+    thickness_step : float
+        Difference between thicknesses for calculating RGB colors.
+
+    porosity_max : float
+        Maximum porosity for calculating RGB colors.
+
+    porosity_step : float
+        Difference between porosities for calculating RGB colors.
+
+    aoi : float
+        Angle of incidence in degrees.
+
+    swpr_wavelength_min : float
+        Lower integration limit for calculating SWPR.
+
+    swpr_wavelength_max : float
+        Uppr integration limit for calculating SWPR.
+
+    Returns
+    -------
+    thickness : array
+        Array of thickness values where RGB and SWPR are calculated
+
+    porosity : bytearray
+        Array of porosity values where RGB and SWPR are calculated
+
+    rgb_wb : array
+        Array of white-balanced RGB colors for each thickness and porosity
+
+    swpr : array
+        array of SWPR for each thickness and porosity.
+
+    """
     # Wavelength axis
     wavelength = np.arange(300, 755, 5).astype('float')
     dwavelength = wavelength[1] - wavelength[0]
@@ -85,12 +144,20 @@ def calculate_rgb_vs_thickness_porosity(
 
         for j in range(len(thickness)):
 
+            reflectance = arc_reflection_model(wavelength=wavelength,
+                                               thickness=thickness[j],
+                                               fraction_abraded=0,
+                                               porosity=porosity[k],
+                                               fraction_dust=0,
+                                               aoi=aoi,
+                                               n0=1.0003)
             # Calculate reflectance
-            reflectance = thin_film_reflectance(index_film=index_film,
-                                                index_substrate=index_substrate,
-                                                film_thickness=thickness[j],
-                                                aoi=aoi,
-                                                wavelength=wavelength)
+            # reflectance = thin_film_reflectance(index_film=index_film,
+            #                                     index_substrate=index_substrate,
+            #                                     film_thickness=thickness[j],
+            #                                     aoi=aoi,
+            #                                     wavelength=wavelength)
+
             # for c in ['Blue', 'Green', 'Red']:
             #     np.sum(reflectance * illuminant_spectrum_photon * dfi[c] / 100) * dwavelength
 
@@ -102,7 +169,9 @@ def calculate_rgb_vs_thickness_porosity(
                 axis=0) * dwavelength
 
             swpr[j, k] = solar_weighted_photon_reflectance(wavelength,
-                                                           reflectance)
+                                                           reflectance,
+                                                           wavelength_min=swpr_wavelength_min,
+                                                           wavelength_max=swpr_wavelength_max)
 
             # Use first run through, with 0 nm thickness, (i.e. low-iron glass)
             # as a reference for white balance.
@@ -121,20 +190,156 @@ def calculate_rgb_vs_thickness_porosity(
     return thickness, porosity, rgb_wb, swpr
 
 
+# def calculate_rgb_vs_thickness_porosity_ideal(
+#         illuminant='LED-B3',
+#         thickness_max=186,
+#         thickness_step=0.4,
+#         porosity_max=0.5,
+#         porosity_step=0.01,
+#         aoi=0,
+#         swpr_wavelength_min=400,
+#         swpr_wavelength_max=1100):
+#     """
+#     Using provided spectral response data from a camera, spectral
+#     transmission through an opical system and a light source, calculate the
+#     expected color as a function of thickness and porosity of a coating of
+#     porous silica on glass.
+#
+#
+#     Parameters
+#     ----------
+#     camera
+#     light_source : str
+#         'LEDW7E_A01_intensity.csv'
+#
+#     optical_system
+#     thickness_max
+#     thickness_step
+#     porosity_max
+#     porosity_step
+#     aoi
+#     swpr_wavelength_min
+#     swpr_wavelength_max
+#
+#     Returns
+#     -------
+#
+#     """
+#     # Wavelength axis
+#     wavelength = np.arange(300, 755, 5).astype('float')
+#     dwavelength = wavelength[1] - wavelength[0]
+#
+#     # Scan thickness and porosity.
+#     thickness = np.arange(0, thickness_max, thickness_step).astype('float')
+#     porosity = np.arange(0, porosity_max, porosity_step).astype('float')
+#
+#     # Initialize arrays.
+#     swpr = np.zeros((len(thickness), len(porosity)))
+#     rgb_wb = np.zeros((len(thickness), len(porosity), 3))
+#
+#     # Calculate RGB colors
+#     for k in tqdm(range(len(porosity))):
+#
+#         index_film = refractive_index_porous_silica(wavelength, porosity[k])
+#         index_substrate = refractive_index_glass(wavelength)
+#
+#         for j in range(len(thickness)):
+#
+#             # Calculate reflectance
+#             reflectance = thin_film_reflectance(index_film=index_film,
+#                                                 index_substrate=index_substrate,
+#                                                 film_thickness=thickness[j],
+#                                                 aoi=aoi,
+#                                                 wavelength=wavelength)
+#
+#             rgb = spectrum_to_rgb(wavelength=wavelength,
+#                                   spectrum=reflectance,
+#                                   illuminant=illuminant)
+#
+#             swpr[j, k] = solar_weighted_photon_reflectance(
+#                 wavelength,
+#                 reflectance,
+#                 wavelength_min=swpr_wavelength_min,
+#                 wavelength_max=swpr_wavelength_max)
+#
+#             # Use first run through, with 0 nm thickness, (i.e. low-iron glass)
+#             # as a reference for white balance.
+#             if thickness[j] == 0:
+#                 rgb_ref = rgb.copy()
+#
+#             # White balance
+#             rgb_wb[j, k, :] = rgb / rgb_ref
+#
+#     return thickness, porosity, rgb_wb, swpr
+
+
 def build_rgb_to_thickness_porosity_interpolator_data(
         camera='Ximea-MC050cg_combined_labeled.csv',
         light_source='LEDW7E_A01_intensity.csv',
         thickness_max=500,
         thickness_step=1,
         porosity_max=0.5,
-        porosity_step=0.01):
+        porosity_step=0.01,
+        aoi=0,
+        swpr_wavelength_min=400,
+        swpr_wavelength_max=1100
+):
+    """
+    Calculate and save RGB and SWPR data as a function of thickness and
+    porosity.
+
+    Using provided spectral response data from a camera, spectral
+    transmission through an opical system and a light source, calculate the
+    expected color as a function of thickness and porosity of a coating of
+    porous silica on glass.
+
+    Parameters
+    ----------
+    camera : str
+        Filename of csv file storing the camera RGB.
+
+    light_source : str
+        Filename of csv file containing light source spectrum.
+
+    optical_system : str
+        Filename of csv file containing optical system transmittance.
+
+    thickness_max : float
+        Maximum thickness for calculating RGB colors.
+
+    thickness_step : float
+        Difference between thicknesses for calculating RGB colors.
+
+    porosity_max : float
+        Maximum porosity for calculating RGB colors.
+
+    porosity_step : float
+        Difference between porosities for calculating RGB colors.
+
+    aoi : float
+        Angle of incidence in degrees.
+
+    swpr_wavelength_min : float
+        Lower integration limit for calculating SWPR.
+
+    swpr_wavelength_max : float
+        Uppr integration limit for calculating SWPR.
+    Returns
+    -------
+    Function does not return anything, it saves the data in a folder.
+
+    """
     thickness, porosity, rgb_wb, swpr = calculate_rgb_vs_thickness_porosity(
         camera=camera,
         light_source=light_source,
         thickness_max=thickness_max,
         thickness_step=thickness_step,
         porosity_max=porosity_max,
-        porosity_step=porosity_step)
+        porosity_step=porosity_step,
+        aoi=aoi,
+        swpr_wavelength_min=swpr_wavelength_min,
+        swpr_wavelength_max=swpr_wavelength_max
+    )
 
     x = rgb_wb[:, :, 0] / np.sum(rgb_wb, axis=2)
     y = rgb_wb[:, :, 1] / np.sum(rgb_wb, axis=2)
@@ -157,6 +362,14 @@ def build_rgb_to_thickness_porosity_interpolator_data(
 
 
 def get_thickness_porosity_interpolator_filename():
+    """
+    Gets the filename of the local copy of the thickness/porosity
+    interpolator data.
+
+    Returns
+    -------
+    filename
+    """
     return os.path.join(os.path.dirname(__file__),
                         'rgb_to_thickness_porosity_data.csv')
 
@@ -217,6 +430,21 @@ _B_interpolator = RegularGridInterpolator((_thickness_list, _porosity_list),
 
 
 def calculate_rgb(thickness, porosity):
+    """
+    Interpolator for calculating RGB vs. thickness and porosity.
+
+    Parameters
+    ----------
+    thickness : ndarray
+        Thickness in (nm)
+
+    porosity : ndarray
+        Fractional porosity
+
+    Returns
+    -------
+
+    """
     coords = np.concatenate((np.atleast_1d(thickness).flatten()[:, np.newaxis],
                              np.atleast_1d(porosity).flatten()[:, np.newaxis]),
                             axis=1)
@@ -230,23 +458,46 @@ def calculate_rgb(thickness, porosity):
     return rgb
 
 
-def calculate_thickness(x, y, xy_distance_white=0.03,
+def calculate_thickness(x, y, xy_distance_white=0.015,
                         porosity_min=0,
                         porosity_max=0.5,
                         thickness_min=0,
                         thickness_max=186,
                         ):
     """
+    Calculate thickness of the coating at an array of (x,y) chromaticity
+    coordinates.
 
     Parameters
     ----------
-    x
-    y
-    xy_distance_white
+    x : ndarray
+        Chromaticity coordinate x = R/(R+G+B). x and y must be the same size.
+
+    y : ndarray
+        Chromaticity coordinate y = G/(R+G+B). x and y must be the same size.
+
+    xy_distance_white : float
+        If chromaticity is closer than xy_distance_white to the white point (
+        0.333, 0.333), then the thickness and porosity are set to 0.
+
+    thickness_min : float
+        Minimum thickness for the interpolator
+
+    thickness_max : float
+        Maximum thickness for the interpolator.
+
+    porosity_min : float
+        Minimum porosity for the interpolator.
+
+    porosity_max : float
+        Maximum porosity for the interpolator.
 
     Returns
     -------
+    thickness : ndarray
 
+        thickness in nm calculated for the given chromaticity coordina.
+        Dimensions will be the same as x, y.
     """
 
     df = get_thickness_porosity_interpolator_data()
@@ -277,12 +528,48 @@ def calculate_thickness(x, y, xy_distance_white=0.03,
 
 
 def calculate_porosity(x, y,
-                       xy_distance_white=0.03,
+                       xy_distance_white=0.015,
                        porosity_min=0,
                        porosity_max=0.5,
                        thickness_min=0,
                        thickness_max=186,
                        ):
+    """
+    Calculate porosity of the coating at an array of (x,y) chromaticity
+    coordinates.
+
+    Parameters
+    ----------
+    x : ndarray
+        Chromaticity coordinate x = R/(R+G+B). x and y must be the same size.
+
+    y : ndarray
+        Chromaticity coordinate y = G/(R+G+B). x and y must be the same size.
+
+    xy_distance_white : float
+        If chromaticity is closer than xy_distance_white to the white point (
+        0.333, 0.333), then the thickness and porosity are set to 0.
+
+    thickness_min : float
+
+        Minimum thickness for the interpolator
+
+    thickness_max : float
+        Maximum thickness for the interpolator.
+
+    porosity_min : float
+        Minimum porosity for the interpolator.
+
+    porosity_max : float
+        Maximum porosity for the interpolator.
+
+
+     Returns
+     -------
+     porosity : ndarray
+         Fractional porosity calculated for the given chromaticity coordina.
+         Dimensions will be the same as x, y.
+     """
     df = get_thickness_porosity_interpolator_data()
     df = df[np.logical_and.reduce(
         (df['porosity'] >= porosity_min,
@@ -309,12 +596,48 @@ def calculate_porosity(x, y,
     return porosity
 
 
-def calculate_swpr(x, y, xy_distance_white=0.03,
+def calculate_swpr(x, y, xy_distance_white=0.015,
                    porosity_min=0,
                    porosity_max=0.5,
                    thickness_min=0,
                    thickness_max=186,
                    ):
+    """
+     Calculate SWPR of the coating at an array of (x,y) chromaticity
+     coordinates.
+
+     Parameters
+     ----------
+     x : ndarray
+         Chromaticity coordinate x = R/(R+G+B). x and y must be the same size.
+
+     y : ndarray
+         Chromaticity coordinate y = G/(R+G+B). x and y must be the same size.
+
+     xy_distance_white : float
+         If chromaticity is closer than xy_distance_white to the white point (
+         0.333, 0.333), then the thickness and porosity are set to 0.
+
+     thickness_min : float
+
+         Minimum thickness for the interpolator
+
+     thickness_max : float
+         Maximum thickness for the interpolator.
+
+     porosity_min : float
+         Minimum porosity for the interpolator.
+
+     porosity_max : float
+         Maximum porosity for the interpolator.
+
+
+      Returns
+      -------
+      swpr : ndarray
+          Fractional SWPR calculated for the given chromaticity coordina.
+          Dimensions will be the same as x, y.
+      """
     df = get_thickness_porosity_interpolator_data()
     df = df[np.logical_and.reduce(
         (df['porosity'] >= porosity_min,
