@@ -14,10 +14,10 @@ def thin_film_reflectance(index_film,
     consists of a semi-infinite layer of air, a thin film with a given
     thickness, and a semi-infinite substrate layer.
 
-    Inputs can be float or ndarray. All inputs that are ndarray must have the
-    same shape. For example, if an array of wavelength values with shape (1,
-    N) is passed, then index_film can either be a float or an ndarray with
-    shape (1,N).
+    This function is fully vectorized, inputs can be float or ndarray. All
+    inputs that are ndarray must have the same shape. For example,
+    if an array of wavelength values with shape (1, N) is passed,
+    then index_film can either be a float or an ndarray with shape (1,N).
 
     The method is derived from the matrix form of the Fresnel equations,
     detailed in Ref. [1].
@@ -59,6 +59,10 @@ def thin_film_reflectance(index_film,
 
     Returns
     -------
+    reflectance : ndarray or float
+
+        Fractional reflectance for each value in the arrays of input
+        parameters. Will have same size as input arrays.
 
     """
 
@@ -100,11 +104,11 @@ def thin_film_reflectance(index_film,
 
     # Return reflectance depending on polarization chosen.
     if polarization == 'mixed':
-        return 0.5 * (Rs + Rp)
+        return 0.5 * np.real(Rs + Rp)
     elif polarization == 's':
-        return Rs
+        return np.real(Rs)
     elif polarization == 'p':
-        return Rp
+        return np.real(Rp)
     else:
         raise Exception('Polarization must be "mixed", "s" or "p".')
 
