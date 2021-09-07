@@ -123,3 +123,36 @@ plt.show()
 
 ```
 
+This example shows how to build the thickness/porosity interpolator and use it to analyze a point.
+```python
+"""
+Example building interpolator and finding thickness, porosity and swpr
+from a chromaticity coordinate.
+
+"""
+from pvarc.image import build_rgb_to_thickness_porosity_interpolator_data, \
+    get_thickness_porosity_interpolator_data, calculate_thickness,\
+    calculate_swpr, calculate_porosity
+
+
+# Build interpolator data and save to file.
+# Takes a minute, but only have to do it once!
+build_rgb_to_thickness_porosity_interpolator_data()
+
+# Inspect generated data.
+df = get_thickness_porosity_interpolator_data()
+print(df.head())
+
+# Calculate thickness for a particular chromaticity coordinate. Could also put
+# in an entire image.
+thickness = calculate_thickness(x=0.3,y=0.2)
+print('Thickness (nm): ', thickness)
+
+# Calculate SWPR for a particular chromaticity coordinate.
+swpr = calculate_swpr(x=0.3,y=0.2)
+print('SWPR: ', swpr)
+
+porosity = calculate_porosity(x=0.3,y=0.2)
+print('Porosity: ', porosity)
+
+```
