@@ -82,7 +82,22 @@ def solar_weighted_photon_reflectance(wavelength,
     return swpr
 
 def solar_integral(wavelength, spectrum,y,wavelength_min=200, wavelength_max=1200):
+    """
+    Integrate a function 'y' against a spectrum, weighting by number of
+    photons.
 
+    Parameters
+    ----------
+    wavelength
+    spectrum
+    y
+    wavelength_min
+    wavelength_max
+
+    Returns
+    -------
+
+    """
     cax = np.logical_and(wavelength > wavelength_min,
                          wavelength < wavelength_max)
 
