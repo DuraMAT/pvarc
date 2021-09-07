@@ -190,87 +190,108 @@ def calculate_rgb_vs_thickness_porosity(
     return thickness, porosity, rgb_wb, swpr
 
 
-# def calculate_rgb_vs_thickness_porosity_ideal(
-#         illuminant='LED-B3',
-#         thickness_max=186,
-#         thickness_step=0.4,
-#         porosity_max=0.5,
-#         porosity_step=0.01,
-#         aoi=0,
-#         swpr_wavelength_min=400,
-#         swpr_wavelength_max=1100):
-#     """
-#     Using provided spectral response data from a camera, spectral
-#     transmission through an opical system and a light source, calculate the
-#     expected color as a function of thickness and porosity of a coating of
-#     porous silica on glass.
-#
-#
-#     Parameters
-#     ----------
-#     camera
-#     light_source : str
-#         'LEDW7E_A01_intensity.csv'
-#
-#     optical_system
-#     thickness_max
-#     thickness_step
-#     porosity_max
-#     porosity_step
-#     aoi
-#     swpr_wavelength_min
-#     swpr_wavelength_max
-#
-#     Returns
-#     -------
-#
-#     """
-#     # Wavelength axis
-#     wavelength = np.arange(300, 755, 5).astype('float')
-#     dwavelength = wavelength[1] - wavelength[0]
-#
-#     # Scan thickness and porosity.
-#     thickness = np.arange(0, thickness_max, thickness_step).astype('float')
-#     porosity = np.arange(0, porosity_max, porosity_step).astype('float')
-#
-#     # Initialize arrays.
-#     swpr = np.zeros((len(thickness), len(porosity)))
-#     rgb_wb = np.zeros((len(thickness), len(porosity), 3))
-#
-#     # Calculate RGB colors
-#     for k in tqdm(range(len(porosity))):
-#
-#         index_film = refractive_index_porous_silica(wavelength, porosity[k])
-#         index_substrate = refractive_index_glass(wavelength)
-#
-#         for j in range(len(thickness)):
-#
-#             # Calculate reflectance
-#             reflectance = thin_film_reflectance(index_film=index_film,
-#                                                 index_substrate=index_substrate,
-#                                                 film_thickness=thickness[j],
-#                                                 aoi=aoi,
-#                                                 wavelength=wavelength)
-#
-#             rgb = spectrum_to_rgb(wavelength=wavelength,
-#                                   spectrum=reflectance,
-#                                   illuminant=illuminant)
-#
-#             swpr[j, k] = solar_weighted_photon_reflectance(
-#                 wavelength,
-#                 reflectance,
-#                 wavelength_min=swpr_wavelength_min,
-#                 wavelength_max=swpr_wavelength_max)
-#
-#             # Use first run through, with 0 nm thickness, (i.e. low-iron glass)
-#             # as a reference for white balance.
-#             if thickness[j] == 0:
-#                 rgb_ref = rgb.copy()
-#
-#             # White balance
-#             rgb_wb[j, k, :] = rgb / rgb_ref
-#
-#     return thickness, porosity, rgb_wb, swpr
+def calculate_rgb_vs_thickness_porosity_ideal(
+        illuminant='LED-B3',
+        thickness_max=186,
+        thickness_step=0.4,
+        porosity_max=0.5,
+        porosity_step=0.01,
+        aoi=0,
+        swpr_wavelength_min=400,
+        swpr_wavelength_max=1100):
+    """
+    Similar to calculate_rgb_vs_thickness_porosity, but uses built in
+    illuminant and no optical system to caclulate RGB and SWPR.
+
+
+
+    Parameters
+    ----------
+    illuminant : str
+        Illuminant.
+
+    thickness_max : float
+        Maximum thickness for calculating RGB colors.
+
+    thickness_step : float
+        Difference between thicknesses for calculating RGB colors.
+
+    porosity_max : float
+        Maximum porosity for calculating RGB colors.
+
+    porosity_step : float
+        Difference between porosities for calculating RGB colors.
+
+    aoi : float
+        Angle of incidence in degrees.
+
+    swpr_wavelength_min : float
+        Lower integration limit for calculating SWPR.
+
+    swpr_wavelength_max : float
+        Uppr integration limit for calculating SWPR.
+
+    Returns
+    -------
+    thickness : array
+        Array of thickness values where RGB and SWPR are calculated
+
+    porosity : bytearray
+        Array of porosity values where RGB and SWPR are calculated
+
+    rgb_wb : array
+        Array of white-balanced RGB colors for each thickness and porosity
+
+    swpr : array
+        array of SWPR for each thickness and porosity.
+
+    """
+    # Wavelength axis
+    wavelength = np.arange(300, 755, 5).astype('float')
+    dwavelength = wavelength[1] - wavelength[0]
+
+    # Scan thickness and porosity.
+    thickness = np.arange(0, thickness_max, thickness_step).astype('float')
+    porosity = np.arange(0, porosity_max, porosity_step).astype('float')
+
+    # Initialize arrays.
+    swpr = np.zeros((len(thickness), len(porosity)))
+    rgb_wb = np.zeros((len(thickness), len(porosity), 3))
+
+    # Calculate RGB colors
+    for k in tqdm(range(len(porosity))):
+
+        index_film = refractive_index_porous_silica(wavelength, porosity[k])
+        index_substrate = refractive_index_glass(wavelength)
+
+        for j in range(len(thickness)):
+
+            # Calculate reflectance
+            reflectance = thin_film_reflectance(index_film=index_film,
+                                                index_substrate=index_substrate,
+                                                film_thickness=thickness[j],
+                                                aoi=aoi,
+                                                wavelength=wavelength)
+
+            rgb = spectrum_to_rgb(wavelength=wavelength,
+                                  spectrum=reflectance,
+                                  illuminant=illuminant)
+
+            swpr[j, k] = solar_weighted_photon_reflectance(
+                wavelength,
+                reflectance,
+                wavelength_min=swpr_wavelength_min,
+                wavelength_max=swpr_wavelength_max)
+
+            # Use first run through, with 0 nm thickness, (i.e. low-iron glass)
+            # as a reference for white balance.
+            if thickness[j] == 0:
+                rgb_ref = rgb.copy()
+
+            # White balance
+            rgb_wb[j, k, :] = rgb / rgb_ref
+
+    return thickness, porosity, rgb_wb, swpr
 
 
 def build_rgb_to_thickness_porosity_interpolator_data(
