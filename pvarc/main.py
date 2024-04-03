@@ -238,7 +238,6 @@ def pv_stack_absorbance(index_glass_coating,
                         thickness_cell,
                         wavelength,
                         cell_arc_physical_improvement_factor=2,
-                        glass_transmission_improvement_factor=2,
                           aoi=8.0,
                           polarization='mixed',
                           index_air=1.0003):
@@ -328,7 +327,7 @@ def pv_stack_absorbance(index_glass_coating,
 
     # Absorbance in the glass:
     A2 = thick_film_absorbance(n=n2,thickness=thickness_glass,wavelength=wavelength,aoi=theta2*180/pi)
-    A2 = A2 / glass_transmission_improvement_factor
+    # A2 = A2 / glass_transmission_improvement_factor
 
     # Transmittance from glass to encapsulant
     T2 = single_interface_transmittance(n0=n2, n1=n3, aoi=theta2*180/pi, polarization=polarization)
@@ -349,6 +348,7 @@ def pv_stack_absorbance(index_glass_coating,
 
     # put it all together to get the fraction of incoming light absorbed by the cell
     ret = {'EQE': np.real(T1 * (1-A2) * T2 *  (1-A3) * T4 * A5),
+           'Light Entering Cell': np.real(T1 * (1-A2) * T2 *  (1-A3) * T4),
            'Transmittance Glass ARC to Glass': np.atleast_1d(T1),
            'Absorbance Glass': np.atleast_1d(A2),
            'Transmittance Glass to Encapsulant': np.atleast_1d(T2),

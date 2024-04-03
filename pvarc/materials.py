@@ -65,6 +65,9 @@ def refractive_index_glass(wavelength, type='soda-lime-low-iron'):
     Data for Soda-lime glass from:
      https://refractiveindex.info/?shelf=glass&book=soda-lime&page=Rubin-lowiron
 
+    The data is modified so that the imaginary part of the refractive index is fixed
+    at the minimum absorption (490 nm) from 490 up to 2600 nm.
+
     Rubin 1985. Range of validity is 310-4600 nm.
 
     Data for BK7 glass from:
@@ -118,7 +121,7 @@ def refractive_index_glass(wavelength, type='soda-lime-low-iron'):
          [4.428, 1.4510669026967], [4.471, 1.449850394547], [4.514, 1.4486222774501], [4.557, 1.4473825472731],
          [4.600, 1.4461312000756]]
 
-        wavelength_k = [[0.31, 1.191E-5], [0.32, 3.062E-6], [0.33, 1.399E-6], [0.34, 6.061E-7], [0.35, 2.458E-7], [0.36, 1.164E-7],
+        wavelength_k = np.array([[0.31, 1.191E-5], [0.32, 3.062E-6], [0.33, 1.399E-6], [0.34, 6.061E-7], [0.35, 2.458E-7], [0.36, 1.164E-7],
          [0.37, 9.300E-8], [0.38, 1.309E-7], [0.39, 6.261E-8], [0.40, 4.570E-8], [0.41, 5.013E-8], [0.42, 5.449E-8],
          [0.43, 5.878E-8], [0.44, 5.095E-8], [0.45, 4.252E-8], [0.46, 3.351E-8], [0.47, 3.675E-8], [0.48, 3.995E-8],
          [0.49, 2.972E-8], [0.50, 3.257E-8], [0.51, 3.538E-8], [0.52, 3.816E-8], [0.53, 4.091E-8], [0.54, 4.362E-8],
@@ -135,7 +138,10 @@ def refractive_index_glass(wavelength, type='soda-lime-low-iron'):
          [2.50, 3.441E-6], [2.60, 5.643E-6], [2.70, 9.156E-6], [2.80, 8.560E-5], [2.90, 9.745E-5], [3.00, 9.318E-5],
          [3.10, 9.489E-5], [3.20, 1.025E-4], [3.30, 1.128E-4], [3.40, 1.250E-4], [3.50, 1.299E-4], [3.60, 1.333E-4],
          [3.70, 1.319E-4], [3.80, 1.282E-4], [3.90, 1.242E-4], [4.00, 1.267E-4], [4.10, 1.460E-4], [4.20, 1.691E-4],
-         [4.30, 2.124E-4], [4.40, 2.810E-4], [4.50, 3.657E-4], [4.60, 1.054E-3]]
+         [4.30, 2.124E-4], [4.40, 2.810E-4], [4.50, 3.657E-4], [4.60, 1.054E-3]])
+
+        # Fix to lower absorption
+        wavelength_k[np.logical_and(wavelength_k[:,0]>0.490, wavelength_k[:,0] < 2.600),1] = 2.972E-8
 
         real_n = np.interp(wavelength, 1e3 * np.array(wavelength_real_n)[:, 0], np.array(wavelength_real_n)[:, 1],left=1.5539233467171,right=1.4473825472731)
         imag_n = np.interp(wavelength, 1e3 * np.array(wavelength_k)[:, 0], np.array(wavelength_k)[:, 1],left=1.191E-5,right=1.054E-3)

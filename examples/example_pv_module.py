@@ -25,26 +25,28 @@ index_cell_coating = refractive_index_SiN(wavelength)
 index_cell = refractive_index_silicon(wavelength)
 
 absorbance = np.zeros((len(aoi), len(wavelength)))
+glass_arc_transmission = np.zeros((len(aoi), len(wavelength)))
+light_entering_cell = np.zeros((len(aoi), len(wavelength)))
 
-thickness_cell=260e3
+thickness_cell=300e3
 cell_arc_physical_improvement_factor=5
 thickness_cell_coating=70
 thickness_encapsulant = 0.45e-3*1e9
-thickness_glass = 2.0e-3*1e9
-thickness_glass_coating = 135
+thickness_glass = 2e-3*1e9
+thickness_glass_coating = 140
 index_air =1.0003
 
-
-index_air = 1
-index_glass_coating = 1
-thickness_glass_coating = 1
-index_glass = 1
-thickness_glass = 1e-3*1e9
-thickness_encapsulant = 1
-index_encapsulant = 1
-thickness_cell_coating = 100
-index_cell_coating = 1
-cell_arc_physical_improvement_factor = 1
+#
+# index_air = 1
+# index_glass_coating = 1.0003
+# thickness_glass_coating = 1
+# index_glass = 1
+# thickness_glass = 1e-3*1e9
+# thickness_encapsulant = 1
+# index_encapsulant = 1
+# thickness_cell_coating = 100
+# index_cell_coating = 1
+# cell_arc_physical_improvement_factor = 1
 
 for k in range(len(aoi)):
     ret = pv_stack_absorbance(
@@ -60,12 +62,13 @@ for k in range(len(aoi)):
                         thickness_cell=thickness_cell,
                         wavelength=wavelength,
                         cell_arc_physical_improvement_factor=cell_arc_physical_improvement_factor,
-                        glass_transmission_improvement_factor=2,
                           aoi=aoi[k],
                           polarization='mixed',
                           index_air=1.0003
         )
     absorbance[k,:] = ret['EQE']
+    glass_arc_transmission[k,:] = ret['Transmittance Glass ARC to Glass']
+    light_entering_cell[k,:] = ret['Light Entering Cell']
 
 
 ret = pv_stack_absorbance(
@@ -81,7 +84,6 @@ ret = pv_stack_absorbance(
                         thickness_cell=thickness_cell,
                           wavelength=wavelength,
                         cell_arc_physical_improvement_factor=cell_arc_physical_improvement_factor,
-                        glass_transmission_improvement_factor=2,
                           aoi=0,
                           polarization='mixed',
                           index_air=1.0003
@@ -100,6 +102,7 @@ color_list = [
 ]
 # plot each IAM function:
 plt.figure(0,figsize=(4.5,3.5))
+# plt.figure(0)
 plt.clf()
 wavelength_to_plot = [365, 430,530,625,730,850,970,1050]
 idx_to_plot = [np.argmin(np.abs(wa - wavelength)) for wa in wavelength_to_plot]
@@ -112,14 +115,52 @@ plt.ylabel('IAM')
 # plt.title('Absorbance vs. AOI')
 plt.legend(loc='lower left',fontsize=8)
 plt.grid('on')
-plt.ylim([75,130])
+plt.ylim([95,102])
 plt.xlim([0,90])
 plt.show()
 plt.savefig('pv_module_sim IAM.png',
             dpi=300,
             bbox_inches='tight')
 
-print(absorbance[:,-1])
+
+# tranmission through glass arc
+plt.figure(11,figsize=(4.5,3.5))
+plt.clf()
+for k in range(len(idx_to_plot)):
+    plt.plot(aoi, 100*glass_arc_transmission[:,idx_to_plot[k]]/glass_arc_transmission[0,idx_to_plot[k]],
+             label='{} nm'.format(wavelength[idx_to_plot[k]]),
+                color=color_list[k])
+plt.xlabel('AOI (degrees)')
+plt.ylabel('Relative Transmission through Glass ARC')
+plt.legend(loc='lower left',fontsize=8)
+plt.grid('on')
+plt.ylim([95,102])
+plt.xlim([0,90])
+plt.show()
+plt.savefig('pv_module_sim Glass ARC Transmission.png',
+            dpi=300,
+            bbox_inches='tight')
+
+# light entering cell
+plt.figure(12,figsize=(4.5,3.5))
+plt.clf()
+for k in range(len(idx_to_plot)):
+    plt.plot(aoi, 100*light_entering_cell[:,idx_to_plot[k]]/light_entering_cell[0,idx_to_plot[k]],
+             label='{} nm'.format(wavelength[idx_to_plot[k]]),
+                color=color_list[k])
+plt.xlabel('AOI (degrees)')
+plt.ylabel('Relative Light Entering Cell')
+plt.legend(loc='lower left',fontsize=8)
+plt.grid('on')
+plt.ylim([95,102])
+plt.xlim([0,90])
+plt.show()
+plt.savefig('pv_module_sim Light Entering Cell.png',
+                dpi=300,
+                bbox_inches='tight')
+
+
+
 
 T1 = ret['Transmittance Glass ARC to Glass']
 
