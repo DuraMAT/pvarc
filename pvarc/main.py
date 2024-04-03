@@ -68,7 +68,7 @@ def thin_film_reflectance(index_film,
 
     # Calculate angles from Snell's law
     theta0 = aoi * pi / 180
-    print('TODO: need to add checks that the calculated value is not off by pi')
+    # print('TODO: need to add checks that the calculated value is not off by pi')
     theta1 = np.arcsin(index_air / index_film * sin(theta0))
     theta2 = np.arcsin(index_air / index_substrate * sin(theta0))
 

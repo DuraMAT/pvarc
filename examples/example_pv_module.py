@@ -1,4 +1,7 @@
+"""
+Example of a PV module simulation using the pvarc package.
 
+"""
 import numpy as np
 import pandas as pd
 import matplotlib
@@ -36,17 +39,6 @@ thickness_glass = 2e-3*1e9
 thickness_glass_coating = 140
 index_air =1.0003
 
-#
-# index_air = 1
-# index_glass_coating = 1.0003
-# thickness_glass_coating = 1
-# index_glass = 1
-# thickness_glass = 1e-3*1e9
-# thickness_encapsulant = 1
-# index_encapsulant = 1
-# thickness_cell_coating = 100
-# index_cell_coating = 1
-# cell_arc_physical_improvement_factor = 1
 
 for k in range(len(aoi)):
     ret = pv_stack_absorbance(
@@ -70,7 +62,7 @@ for k in range(len(aoi)):
     glass_arc_transmission[k,:] = ret['Transmittance Glass ARC to Glass']
     light_entering_cell[k,:] = ret['Light Entering Cell']
 
-
+# Model again at zero angle of incidence
 ret = pv_stack_absorbance(
                     index_glass_coating=index_glass_coating,
                         index_glass=index_glass,
@@ -88,8 +80,10 @@ ret = pv_stack_absorbance(
                           polarization='mixed',
                           index_air=1.0003
         )
-
+# calculate IAM
 iam = absorbance/absorbance[0,:]
+
+# Lots o plots!
 color_list = [
     '#9400D3',  # Darker Violet
     '#4B0082',  # Indigo (kept the same as it's already a distinct deep blue)
