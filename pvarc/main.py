@@ -226,6 +226,90 @@ def thick_film_absorbance(n,thickness,wavelength,aoi):
 
     return 1 - np.exp(-delta)
 
+
+import numpy as np
+
+import numpy as np
+
+import numpy as np
+
+
+def cell_collection_probability(n, thickness, wavelength, aoi, minority_carrier_diffusion_length):
+    """
+    Calculate the probability that a minority carrier is extracted for each incident photon over the thickness
+    of a solar cell for multiple sets of input parameters.
+
+    Parameters:
+        n (np.ndarray or float): Array of complex refractive indices (n + ik) or a single complex refractive index.
+        thickness (np.ndarray or float): Array of cell thicknesses or a single cell thickness.
+        wavelength (np.ndarray or float): Array of wavelengths or a single wavelength.
+        aoi (np.ndarray or float): Array of angles of incidence in degrees or a single angle.
+        minority_carrier_diffusion_length (np.ndarray or float): Array of minority carrier diffusion lengths or a single diffusion length.
+
+    Returns:
+        integrated_collection_probabilities (np.ndarray or float): Array of integrated collection probabilities or a single integrated collection probability.
+    """
+    # Determine the maximum length of the input arrays
+    max_length = max(
+        np.size(n),
+        np.size(thickness),
+        np.size(wavelength),
+        np.size(aoi),
+        np.size(minority_carrier_diffusion_length)
+    )
+
+    # Convert all inputs to arrays and repeat float inputs to match the maximum length
+    if not isinstance(n, np.ndarray):
+        n = np.array([n] * max_length)
+    if not isinstance(thickness, np.ndarray):
+        thickness = np.array([thickness] * max_length)
+    if not isinstance(wavelength, np.ndarray):
+        wavelength = np.array([wavelength] * max_length)
+    if not isinstance(aoi, np.ndarray):
+        aoi = np.array([aoi] * max_length)
+    if not isinstance(minority_carrier_diffusion_length, np.ndarray):
+        minority_carrier_diffusion_length = np.array([minority_carrier_diffusion_length] * max_length)
+
+    # Ensure all input arrays have the same length
+    assert len(n) == len(thickness) == len(wavelength) == len(aoi) == len(minority_carrier_diffusion_length)
+
+    # Initialize array to store integrated collection probabilities
+    integrated_collection_probabilities = np.zeros(len(n))
+
+    for i in range(len(n)):
+        # Get parameters for current iteration
+        n_complex = n[i]
+        k = np.imag(n_complex)
+        thickness_i = thickness[i]
+        wavelength_i = wavelength[i]
+        minority_carrier_diffusion_length_i = minority_carrier_diffusion_length[i]
+
+        # Calculate the absorption coefficient using the imaginary part of the refractive index
+        alpha = (4 * np.pi * k) / wavelength_i  # Absorption coefficient
+
+        # Depth range
+        depth = np.linspace(0, thickness_i, 20)  # Using 500 depth points for each calculation
+
+        # Absorption probability as a function of depth
+        P_abs = 1 - np.exp(-alpha * depth)
+
+        # Collection probability as a function of depth
+        P_col = np.exp(-depth / minority_carrier_diffusion_length_i)
+
+        # Combined probability of absorption and collection
+        P_combined = P_abs * P_col
+
+        # Calculate the integrated collection probability over the thickness
+        integrated_collection_probabilities[i] = np.trapz(P_combined, depth) / thickness_i
+
+    # Return a single value if the input was a single value, otherwise return the array
+    if len(integrated_collection_probabilities) == 1:
+        return integrated_collection_probabilities[0]
+    else:
+        return integrated_collection_probabilities
+
+
+
 def pv_stack_absorbance(index_glass_coating,
                         index_glass,
                         index_encapsulant,
@@ -237,6 +321,7 @@ def pv_stack_absorbance(index_glass_coating,
                         thickness_cell_coating,
                         thickness_cell,
                         wavelength,
+                        light_redirection_factor=0,
                         cell_arc_physical_improvement_factor=2,
                           aoi=8.0,
                           polarization='mixed',
@@ -300,11 +385,12 @@ def pv_stack_absorbance(index_glass_coating,
 
     # Calculate angles from Snell's law
     theta0 = aoi * pi / 180
-    theta1 = np.arcsin(index_air / index_glass_coating * sin(theta0))
-    theta2 = np.arcsin(index_air / index_glass * sin(theta0))
-    theta3 = np.arcsin(index_air / index_encapsulant * sin(theta0))
-    theta4 = np.arcsin(index_air / index_cell_coating * sin(theta0))
-    theta5 = np.arcsin(index_air / index_cell * sin(theta0))
+    theta1 = np.arcsin(np.real(index_air) / np.real(index_glass_coating) * sin(theta0))
+    theta2 = np.arcsin(np.real(index_air) / np.real(index_glass) * sin(theta0))
+    theta3 = np.arcsin(np.real(index_air) / np.real(index_encapsulant) * sin(theta0))
+    theta4 = np.arcsin(np.real(index_air) / np.real(index_cell_coating) * sin(theta0))
+    theta5 = np.arcsin(np.real(index_air) / np.real(index_cell) * sin(theta0))
+
 
 
     # Give index of refraction values better names.
@@ -324,6 +410,9 @@ def pv_stack_absorbance(index_glass_coating,
                                  polarization=polarization,
                                  index_air=n0)
 
+    # Light redirected back from neighboring cell
+    # R1 = T1 * (1 - T1) * light_redirection_factor * np.cos(theta0)
+
 
     # Absorbance in the glass:
     A2 = thick_film_absorbance(n=n2,thickness=thickness_glass,wavelength=wavelength,aoi=theta2*180/pi)
@@ -334,6 +423,9 @@ def pv_stack_absorbance(index_glass_coating,
 
     # Absorbance in the encapsulant
     A3 = thick_film_absorbance(n=n3, thickness=thickness_encpsulant, wavelength=wavelength, aoi=theta3 * 180 / pi)
+
+    R1 = (1 - T1) * light_redirection_factor
+    # R1 = light_redirection_factor * (1 - np.cos(theta0))
 
     # Transmittance through cell ARC into the cell
     T4 = thin_film_transmittance(index_film=n4,
@@ -346,8 +438,11 @@ def pv_stack_absorbance(index_glass_coating,
     T4 = 1 - (1 - T4) / cell_arc_physical_improvement_factor
     A5 = thick_film_absorbance(n=n5,thickness=thickness_cell,wavelength=wavelength,aoi=theta5*180/pi)
 
+    # A5 = cell_collection_probability(n=n5, thickness=thickness_cell, wavelength=wavelength, aoi=theta5*180/pi,
+    #                                  minority_carrier_diffusion_length=300e3)
+
     # put it all together to get the fraction of incoming light absorbed by the cell
-    ret = {'EQE': np.real(T1 * (1-A2) * T2 *  (1-A3) * T4 * A5),
+    ret = {'EQE': np.real( (T1 + R1) * (1-A2) * T2 *  (1-A3) * T4 * A5),
            'Light Entering Cell': np.real(T1 * (1-A2) * T2 *  (1-A3) * T4),
            'Transmittance Glass ARC to Glass': np.atleast_1d(T1),
            'Absorbance Glass': np.atleast_1d(A2),

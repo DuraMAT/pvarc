@@ -32,7 +32,7 @@ glass_arc_transmission = np.zeros((len(aoi), len(wavelength)))
 light_entering_cell = np.zeros((len(aoi), len(wavelength)))
 
 thickness_cell=300e3
-cell_arc_physical_improvement_factor=5
+cell_arc_physical_improvement_factor=7
 thickness_cell_coating=70
 thickness_encapsulant = 0.45e-3*1e9
 thickness_glass = 2e-3*1e9
@@ -105,7 +105,7 @@ for k in range(len(idx_to_plot)):
     plt.plot(aoi, 100*iam[:,idx_to_plot[k]], label='{} nm'.format(wavelength[idx_to_plot[k]]),
              color=color_list[k])
 plt.xlabel('AOI (degrees)')
-plt.ylabel('IAM')
+plt.ylabel('IAM (%)')
 # plt.title('Absorbance vs. AOI')
 plt.legend(loc='lower left',fontsize=8)
 plt.grid('on')

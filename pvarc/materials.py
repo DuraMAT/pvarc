@@ -348,7 +348,7 @@ def refractive_index_silicon(wavelength):
 
     return n
 
-def refractive_index_eva(wavelength):
+def refractive_index_eva(wavelength,uv_abs_factor=5):
     """
     UV Transparent EVA
 
@@ -445,8 +445,11 @@ def refractive_index_eva(wavelength):
                     [2.45, 5.78E-04], [2.46, 5.33E-04], [2.47, 5.03E-04], [2.48, 4.65E-04], [2.49, 4.45E-04],
                     [2.5, 4.19E-04]]
 
+
     wavelength_real_n = np.array(wavelength_real_n)
     wavelength_k = np.array(wavelength_k)
+    # wavelength_k[:,1] = wavelength_k[:,1]*2
+    wavelength_k[:15,1] = wavelength_k[:15,1]*uv_abs_factor
     real_n = np.interp(wavelength, 1e3*wavelength_real_n[:, 0], wavelength_real_n[:, 1], left=1.557,right=1.483)
     imag_n = np.interp(wavelength, 1e3*wavelength_k[:, 0], wavelength_k[:, 1],left=9.86E-06,right=4.19E-04)
 
