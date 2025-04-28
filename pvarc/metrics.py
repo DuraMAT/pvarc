@@ -3,7 +3,7 @@ import pandas as pd
 import os
 
 
-def get_AM1p5_spectrum():
+def get_AM1p5_spectrum(wavelength=None):
     """
     Get the AM1.5 spectrum. Data file available at:
 
@@ -20,6 +20,14 @@ def get_AM1p5_spectrum():
     cd = os.path.dirname(os.path.abspath(__file__))
 
     df = pd.read_csv(os.path.join(cd, 'astmg173.csv'), skiprows=1)
+
+
+    # pandas interpolate at the wavelength points
+    if wavelength is not None:
+        df = df.set_index('wavelength nm')
+        df = df.reindex(wavelength)
+        df = df.interpolate()
+
     return df
 
 
