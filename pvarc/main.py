@@ -719,7 +719,8 @@ def pv_stack_absorbance(index_glass_coating,
                         cell_arc_physical_improvement_factor=2,
                           aoi=8.0,
                           polarization='mixed',
-                          index_air=1.0003):
+                          index_air=1.0003,
+                        ):
     """
     Calculate absorbance in a PV cell using a simplified one-way model.
 

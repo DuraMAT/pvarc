@@ -44,6 +44,9 @@ print('Mean SWPR: {:.2%}'.format(np.nanmean(swpr)))
 print('Mean Thickness (nm): {:.2%}'.format(np.nanmean(thickness)))
 print('Mean Porosity: {:.2%}'.format(np.nanmean(porosity)))
 
+
+pix_per_mm = 2035/8
+
 # Make figures.
 plt.figure(22)
 plt.clf()

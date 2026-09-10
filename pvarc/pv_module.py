@@ -115,7 +115,7 @@ class PVStack:
             self.thickness_encapsulant = 0.45e-3 * 1e9
             self.thickness_glass = 2e-3 * 1e9
             # self.thickness_glass_coating = 128
-            self.thickness_glass_coating = 125
+            self.thickness_glass_coating = 130
 
 
         elif cell_type == 'HJT':
@@ -132,11 +132,11 @@ class PVStack:
             # self.thickness_cell = 300e3
             self.thickness_cell = 130e3
             self.cell_arc_physical_improvement_factor = 20
-            self.thickness_cell_coating_1 = 70
+            self.thickness_cell_coating_1 = 90
             self.thickness_cell_coating_2 = 9
             self.thickness_encapsulant = 0.45e-3 * 1e9
             self.thickness_glass = 2e-3 * 1e9
-            self.thickness_glass_coating = 125
+            self.thickness_glass_coating = 130
 
             # self.cell_path_length_enhancement_width = 30
             # self.cell_path_length_enhancement_height = 30

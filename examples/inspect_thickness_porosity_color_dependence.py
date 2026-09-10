@@ -18,9 +18,9 @@ from pvarc.image import calculate_rgb_vs_thickness_porosity
 
 
 thickness, porosity, rgb_wb, swpr = calculate_rgb_vs_thickness_porosity(
-    thickness_max=600,
+    thickness_max=1100,
     thickness_step=10,
-    porosity_max=1.0,
+    porosity_max=0.5,
     porosity_step=0.05)
 
 gamma = 1
@@ -64,7 +64,8 @@ plt.savefig('ARC_color_thickness_porosity_extended.pdf',
 
 
 # Plot SWPR
-plt.figure(1, figsize=(3.7, 3))
+# plt.figure(1, figsize=(3.7, 3))
+plt.figure(1, figsize=(8,7))
 plt.clf()
 plt.contourf(thickness, porosity*100, swpr.transpose()*100,levels=20)
 cbar = plt.colorbar()

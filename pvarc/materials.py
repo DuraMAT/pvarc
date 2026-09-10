@@ -500,7 +500,7 @@ def refractive_index_porous_silica(wavelength, porosity=0.5, model='lookup'):
     return n_total
 
 
-def refractive_index_silicon(wavelength):
+def refractive_index_silicon(wavelength, temperature=25):
     """
     Refractive index for silicon
 
@@ -594,12 +594,49 @@ def refractive_index_silicon(wavelength):
                     [1.4200e+00, 5.6500e-13], [1.4300e+00, 2.8449e-13], [1.4400e+00, 2.0626e-13],
                     [1.4500e+00, 1.3846e-13]]
 
+    # real_n = np.interp(wavelength, 1e3*np.array(wavelength_real_n)[:, 0], np.array(wavelength_real_n)[:, 1])
+    # imag_n = np.interp(wavelength, 1e3*np.array(wavelength_k)[:, 0], np.array(wavelength_k)[:, 1])
+    #
+    # n = real_n + 1j*imag_n
+    # return n
+
+
+    wavelength_k = np.array(wavelength_k)
+    wavelength_real_n = np.array(wavelength_real_n)
+
+    # --- Interpolation baseline at 300 K ---
     real_n = np.interp(wavelength, 1e3*np.array(wavelength_real_n)[:, 0], np.array(wavelength_real_n)[:, 1])
-    imag_n = np.interp(wavelength, 1e3*np.array(wavelength_k)[:, 0], np.array(wavelength_k)[:, 1])
+    k_300 = np.interp(wavelength, 1e3*wavelength_k[:, 0], wavelength_k[:, 1])
 
-    n = real_n + 1j*imag_n
+    # --- Apply bandgap shift to k ---
+    # Photon energy [eV]
+    E = 1240.0 / wavelength
 
-    return n
+    # Varshni relation for Eg(T)
+    Eg0 = 1.17   # eV
+    alpha_v = 4.73e-4  # eV/K
+    beta_v = 636       # K
+
+    temperature = temperature + 273.15  # K
+    Eg_T = Eg0 - (alpha_v * temperature**2) / (temperature + beta_v)
+    Eg_300 = Eg0 - (alpha_v * (25+273.15)**2) / ((25+273.15) + beta_v)
+
+
+    # Energy shift
+    dEg = Eg_T - Eg_300
+    E_shifted = E - dEg
+
+    # Convert back to wavelength
+    wavelength_shifted = 1240.0 / E_shifted
+
+    # Resample extinction coefficient at shifted energy
+    E_table = 1240.0 / (1e3*wavelength_k[:,0])
+
+    k_T = np.interp(wavelength_shifted, 1e3*wavelength_k[:, 0], wavelength_k[:,1])
+
+    return real_n + 1j*k_T
+
+
 
 def refractive_index_eva(wavelength,uv_abs_factor=3):
     """
